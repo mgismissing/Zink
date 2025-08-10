@@ -42,7 +42,7 @@ class ZinkLexer(Lexer):
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
         "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW",
         "DB_ARROW", "DB_DARROW", "DB_SMARROW",
-        "DOLLAR", "HASHTAG", "ELLIPSIS",
+        "DOLLAR", "HASHTAG", "ELLIPSIS", "OUTPUT",
         "SUPER_INIT",
         "NEWLINE", "SPACE"
     }
@@ -82,6 +82,8 @@ class ZinkLexer(Lexer):
 
     DB_PLUS                 = r"\+\+"
     DB_MINUS                = r"--"
+
+    OUTPUT                  = r":::"
 
     SELF                    = r"@->"
     SELF_EQUAL              = r"@<-"
@@ -650,6 +652,10 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("del", p.expr)
     
+    @_("OUTPUT expr end")
+    def stmt(self, p):
+        return ("output", p.expr)
+    
     @_("LPAREN expr COLON_EQUAL expr RPAREN")
     def expr(self, p):
         return ("walrus", p.expr0, p.expr1)
@@ -1057,6 +1063,8 @@ if __name__ == "__main__":
 
             elif node[0]== "ellipsis":                                          return f"..."
             elif node[0]== "super-init":                                        return f"super().__init__"
+
+            elif node[0]== "output":                                            return f"print({wt(node[1])})"
 
             elif node[0]== "pass":                                              return f"pass"
             elif node[0]== "continue":                                          return f"continue"
