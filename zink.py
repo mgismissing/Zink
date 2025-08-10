@@ -36,16 +36,16 @@ class FormatLexer(Lexer):
 
 class ZinkLexer(Lexer):
     tokens = {
-        "ID", "NUMBER", "STRING", "BSTRING", "FSTRING", "TRUE", "FALSE", "NONE",
+        "ID", "NUMBER", "STRING", "BSTRING", "RSTRING", "FSTRING", "TRUE", "FALSE", "NONE", "SELF",
         "EQUAL",
         "DB_PLUS", "DB_MINUS",
         "PLUS", "MINUS", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL",
-        "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "COLON_EQUAL", "DB_ASTERISK_EQUAL", "DB_SLASH_EQUAL", "PERCENTAGE_EQUAL", "MATMUL_EQUAL",
+        "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "COLON_EQUAL", "DB_ASTERISK_EQUAL", "DB_SLASH_EQUAL", "PERCENTAGE_EQUAL", "MATMUL_EQUAL", "SELF_EQUAL",
         "AMPERSAND", "PIPE", "CARET", "TILDE", "DB_LESS_THAN", "DB_GREATER_THAN",
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "AT", "IN", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE",
         "PASS", "CONTINUE", "BREAK", "RETURN", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
@@ -74,6 +74,11 @@ class ZinkLexer(Lexer):
         t.value = t.value[2:-1]
         return t
 
+    @_(r'r"(?:[^"\\]|\\.)*"')
+    def RSTRING(self, t):
+        t.value = t.value[2:-1]
+        return t
+
     @_(r'f"(?:[^"\\{]|\\.|{[^}]*})*"')
     def FSTRING(self, t):
         t.value = t.value[2:-1]
@@ -85,6 +90,9 @@ class ZinkLexer(Lexer):
 
     DB_PLUS                 = r"\+\+"
     DB_MINUS                = r"--"
+
+    SELF                    = r"@->"
+    SELF_EQUAL              = r"@<-"
 
     DB_ARROW                = r"<->"
     DB_DARROW               = r"<=>"
@@ -171,6 +179,7 @@ class ZinkLexer(Lexer):
     ID["as"]                = "AS"
     ID["at"]                = "AT"
     ID["in"]                = "IN"
+    ID["to"]                = "TO"
     ID["try"]               = "TRY"
     ID["catch"]             = "CATCH"
     ID["pass"]              = "PASS"
@@ -323,17 +332,17 @@ class ZinkParser(Parser):
     def targ(self, p):
         return ("typed-arg", p.ID, p.type)
     
+    @_("targs COMMA targ")
+    def targs(self, p):
+        return p.targs + [p.targ]
+    
+    @_("targ")
+    def targs(self, p):
+        return [p.targ]
+    
     @_("targ")
     def farg(self, p):
         return p.targ
-    
-    #@_("targs COMMA targ")
-    #def targs(self, p):
-    #    return p.targs + [p.targ]
-    
-    #@_("targ")
-    #def targs(self, p):
-    #    return [p.targ]
     
     @_("ID EQUAL expr")
     def farg(self, p):
@@ -431,9 +440,9 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return p.expr
     
-    @_("args EQUAL args end")
+    @_("targs EQUAL args end")
     def stmt(self, p):
-        return ("set", p.args0, p.args1)
+        return ("set", p.targs, p.args)
     
     @_("expr PLUS_EQUAL expr end")
     def stmt(self, p):
@@ -494,6 +503,14 @@ class ZinkParser(Parser):
     @_("expr DB_GREATER_THAN_EQUAL expr end")
     def stmt(self, p):
         return ("set-bitwise-shr", p.expr0, p.expr1)
+    
+    @_("SELF_EQUAL expr end")
+    def stmt(self, p):
+        return ("set-self", p.expr)
+    
+    @_("expr TO expr end")
+    def stmt(self, p):
+        return ("set-cast", p.expr0, p.expr1)
     
     @_("LBRACE expr RBRACE RARROW expr end")
     def stmt(self, p):
@@ -587,6 +604,14 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("global", p.var)
     
+    @_("DEF ID end program DOT")
+    def stmt(self, p):
+        return ("func-def-untyped", p.ID, [], p.program)
+    
+    @_("DEF ID LPAREN fargs RPAREN end program DOT")
+    def stmt(self, p):
+        return ("func-def-untyped", p.ID, p.fargs, p.program)
+    
     @_("DEF ID COLON type end program DOT")
     def stmt(self, p):
         return ("func-def", p.ID, [], p.type, p.program)
@@ -650,6 +675,10 @@ class ZinkParser(Parser):
         return ("NONE",)
     
     @_("ID LPAREN fcargs RPAREN")
+    def func(self, p):
+        return ("func", p.ID, p.fcargs)
+    
+    @_("ID LPAREN NEWLINE fcargs NEWLINE RPAREN")
     def func(self, p):
         return ("func", p.ID, p.fcargs)
     
@@ -874,6 +903,10 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("BSTRING", p.BSTRING)
     
+    @_("RSTRING")
+    def expr(self, p):
+        return ("RSTRING", p.RSTRING)
+    
     @_("FSTRING")
     def expr(self, p):
         return ("FSTRING", p.FSTRING)
@@ -918,6 +951,10 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("member", p.expr0, p.expr1)
     
+    @_("SELF expr %prec MEMBER")
+    def expr(self, p):
+        return ("member-self", p.expr)
+    
     @_("USMARROW expr %prec STRING_UPPER")
     def expr(self, p):
         return ("string-upper", p.expr)
@@ -947,6 +984,10 @@ class ZinkParser(Parser):
         return ("generator-at", p.expr0, p.args, p.expr1, p.expr2)
     
     @_("LPAREN expr IF expr ELSE expr RPAREN %prec TERNARY")
+    def expr(self, p):
+        return ("ternary", p.expr0, p.expr1, p.expr2)
+    
+    @_("LPAREN expr IF expr NEWLINE ELSE expr RPAREN %prec TERNARY")
     def expr(self, p):
         return ("ternary", p.expr0, p.expr1, p.expr2)
     
@@ -999,6 +1040,7 @@ if __name__ == "__main__":
             elif node[0]== "NUMBER":    return str(node[1])
             elif node[0]== "STRING":    return f"\"{node[1]}\""
             elif node[0]== "BSTRING":   return f"b\"{node[1]}\""
+            elif node[0]== "RSTRING":   return f"r'{node[1]}'"
             elif node[0]== "TRUE":      return "True"
             elif node[0]== "FALSE":     return "False"
             elif node[0]== "NONE":      return "None"
@@ -1045,6 +1087,8 @@ if __name__ == "__main__":
             elif node[0]== "set-bitwise-not":   td = wt(node[1]);               return f"{td} = ~{td}"
             elif node[0]== "set-bitwise-shl":   td = wt(node[1]);               return f"{td} <<= {wt(node[2])}"
             elif node[0]== "set-bitwise-shr":   td = wt(node[1]);               return f"{td} >>= {wt(node[2])}"
+            elif node[0]== "set-self":                                          return f"self.{(_ := wt(node[1]))} = {_}"
+            elif node[0]== "set-cast":          td = wt(node[1]);               return f"{td} = type({wt(node[2])}())({td})"
             elif node[0]== "add":                                               return f"({wt(node[1])} + {wt(node[2])})"
             elif node[0]== "subtract":                                          return f"({wt(node[1])} - {wt(node[2])})"
             elif node[0]== "multiply":                                          return f"({wt(node[1])} * {wt(node[2])})"
@@ -1079,6 +1123,7 @@ if __name__ == "__main__":
             elif node[0]== "list-remove":                                       return f"{wt(node[2])} = {wt(node[1])}.pop()"
             elif node[0]== "list-append":                                       return f"{wt(node[1])}.append({wt(node[2])})"
             elif node[0]== "member":                                            return f"{wt(node[1])}.{wt(node[2])}"
+            elif node[0]== "member-self":                                       return f"self.{wt(node[1])}"
             elif node[0]== "string-upper":                                      return f"{wt(node[1])}.upper()"
             elif node[0]== "string-lower":                                      return f"{wt(node[1])}.lower()"
             elif node[0]== "range-inc-inc":                                     return f"range({wt(node[1])}, {wt(node[2])}+1, {wt(node[3])})"
@@ -1112,6 +1157,7 @@ if __name__ == "__main__":
             elif node[0]== "inc-after":                                         return f"(({(tmp := wt(node[1]))} := {tmp}+1)-1)"
             elif node[0]== "dec-after":                                         return f"(({(tmp := wt(node[1]))} := {tmp}-1)+1)"
             elif node[0]== "func-def":          nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}) -> {wt(node[3])}:{"\n".join([""]+wt(node[4]))}"
+            elif node[0]== "func-def-untyped":  nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}):{"\n".join([""]+wt(node[3]))}"
             elif node[0]== "class-def":         nd += 4;                        return f"class {node[1]}:{"\n".join([""]+wt(node[2]))}"
             elif node[0]== "class-def-from":    nd += 4;                        return f"class {node[1]}({node[2]}):{"\n".join([""]+wt(node[3]))}"
             elif node[0]== "with":              nd += 4;                        return f"with {wt(node[1])} as {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
