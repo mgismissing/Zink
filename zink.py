@@ -227,14 +227,15 @@ class ZinkParser(Parser):
     log = FilteredLogger(sys.stderr)
 
     def error(self, token):
+        sys.stderr.write("\b\b\b\b[!] ")
         if token:
             lineno = getattr(token, "lineno", 0)
             if lineno:
-                sys.stderr.write(f"sly: Error at line {lineno}, token={token.type}\n")
+                sys.stderr.write(f"Error at line {lineno} (token \"{token.type}\")\n")
             else:
-                sys.stderr.write(f"sly: Error, token={token.type}")
+                sys.stderr.write(f"Error (token \"{token.type}\")\n")
         else:
-            sys.stderr.write("sly: Parse error in input. EOF\n")
+            sys.stderr.write("Unexpected EOF\n")
         exit(1)
 
     tokens = ZinkLexer.tokens
@@ -1207,23 +1208,33 @@ if __name__ == "__main__":
     
     print(end="\r          \r", flush=True)
 
-    if len(sys.argv) > 2:
-        with open(file := sys.argv[2], "r") as f:
-            print(end=f"zink: {file} ... ", flush=True)
+    if len(sys.argv) == 3:
+        with open((file := sys.argv[2]) + ".z", "r") as f:
             read = f.read()
             if not read.endswith("\n"): read += "\n"
             parsed = parse(read)
             #print(parsed)
             if parsed != None:
-                if len(sys.argv) > 3:
-                    with open(out := sys.argv[3], "w") as f:
-                        f.write("\n".join(parsed))
-                    print(f"\rzink: {file.ljust(16, " ")} -> {out}")
+                out = "\n".join(parsed)
+                rung["__file__"] = file
+                exec(out, rung)
+    if len(sys.argv) > 4:
+        src = sys.argv[-2]
+        out = sys.argv[-1]
+        for file in sys.argv[2:-2]:
+            with open(f"{src}/{file}.z", "r") as f:
+                print(end=f"zink: {f"{src}/{file}.z".ljust(16)} ... ", flush=True)
+                read = f.read()
+                if not read.endswith("\n"): read += "\n"
+                parsed = parse(read)
+                if parsed != None:
+                    with open(f"{out}/{file}.py", "w") as fout:
+                        fout.write("\n".join(parsed))
+                    print(f"\b\b\b\b--> {out}/{file}.py")
                 else:
-                    out = "\n".join(parsed)
-                    rung["__file__"] = file
-                    exec(out, rung)
-                
+                    print(f"ERR")
+                    exit(1)
+
     else:
         try:
             while True:
