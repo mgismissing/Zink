@@ -1,6 +1,8 @@
 import sys
 from sly import Lexer, Parser
 
+print(end="zink: ... ", flush=True)
+
 class FilteredLogger(object):
     def __init__(self, f):
         self.f = f
@@ -23,20 +25,9 @@ class FilteredLogger(object):
 
     critical = debug
 
-class FormatLexer(Lexer):
-    tokens = {
-        "LITERAL", "EXPR"
-    }
-
-    LITERAL = r"[^{}]+"
-    @_(r"\{[^{}]*\}")
-    def EXPR(self, t):
-        t.value = t.value[1:-1]
-        return t
-
 class ZinkLexer(Lexer):
     tokens = {
-        "ID", "NUMBER", "STRING", "BSTRING", "RSTRING", "FSTRING", "TRUE", "FALSE", "NONE", "SELF",
+        "ID", "NUMBER", "STRING", "BSTRING", "RSTRING", "RAWSTRING", "TRUE", "FALSE", "NONE", "SELF",
         "EQUAL",
         "DB_PLUS", "DB_MINUS",
         "PLUS", "MINUS", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL",
@@ -45,13 +36,14 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE",
-        "PASS", "CONTINUE", "BREAK", "RETURN", "GLOBAL",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE",
+        "PASS", "CONTINUE", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
         "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW",
         "DB_ARROW", "DB_DARROW", "DB_SMARROW",
         "DOLLAR", "HASHTAG", "ELLIPSIS",
+        "SUPER_INIT",
         "NEWLINE", "SPACE"
     }
 
@@ -78,9 +70,9 @@ class ZinkLexer(Lexer):
     def RSTRING(self, t):
         t.value = t.value[2:-1]
         return t
-
-    @_(r'f"(?:[^"\\{]|\\.|{[^}]*})*"')
-    def FSTRING(self, t):
+    
+    @_(r'R"(?:[^"\\]|\\.)*"')
+    def RAWSTRING(self, t):
         t.value = t.value[2:-1]
         return t
 
@@ -93,6 +85,7 @@ class ZinkLexer(Lexer):
 
     SELF                    = r"@->"
     SELF_EQUAL              = r"@<-"
+    SUPER_INIT              = r"@\^"
 
     DB_ARROW                = r"<->"
     DB_DARROW               = r"<=>"
@@ -186,8 +179,6 @@ class ZinkLexer(Lexer):
     ID["continue"]          = "CONTINUE"
     ID["global"]            = "GLOBAL"
     ID["break"]             = "BREAK"
-    ID["return"]            = "RETURN"
-    ID["ret"]               = "RETURN"
     ID["True"]              = "TRUE"
     ID["False"]             = "FALSE"
     ID["None"]              = "NONE"
@@ -201,6 +192,9 @@ class ZinkLexer(Lexer):
     ID["class"]             = "CLASS"
     ID["with"]              = "WITH"
     ID["raise"]             = "RAISE"
+    ID["between"]           = "BETWEEN"
+    ID["match"]             = "MATCH"
+    ID["case"]              = "CASE"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -255,8 +249,8 @@ class ZinkParser(Parser):
         ("left", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL", "AMPERSAND", "PIPE", "CARET", "DB_LESS_THAN", "DB_GREATER_THAN", "COLON_EQUAL"),
         ("right", "UNARY_PLUS", "UNARY_MINUS", "STRING_UPPER", "STRING_LOWER", "LENGTH", "TYPE", "TILDE"),
         ("left", "INCREMENT", "DECREMENT"),
-        ("left", "CAST"),
-        ("left", "MEMBER", "DOT"),
+        ("left", "AS"),
+        ("left", "MEMBER", "DOT", "LPAREN"),
     )
 
     @_("stmts")
@@ -291,6 +285,10 @@ class ZinkParser(Parser):
     @_("type")
     def types(self, p):
         return [p.type]
+    
+    @_("LPAREN type RPAREN")
+    def type(self, p):
+        return p.type
     
     @_("type LPAREN types RPAREN")
     def type(self, p):
@@ -588,6 +586,14 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("try-catch-else", p.program0, p.try_catches, p.program1)
     
+    @_("MATCH expr end program DOT end")
+    def stmt(self, p):
+        return ("match", p.expr, p.program)
+    
+    @_("CASE expr end program DOT end")
+    def stmt(self, p):
+        return ("case", p.expr, p.program)
+
     @_("PASS end")
     def stmt(self, p):
         return ("pass",)
@@ -632,13 +638,11 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("with", p.expr0, p.expr1, p.program)
     
-    @_("RETURN end",
-       "LARROW end")
+    @_("LARROW end")
     def stmt(self, p):
         return ("return", None)
     
-    @_("RETURN expr end",
-       "LARROW expr end")
+    @_("LARROW expr end")
     def stmt(self, p):
         return ("return", p.expr)
     
@@ -674,18 +678,18 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("NONE",)
     
-    @_("ID LPAREN fcargs RPAREN")
+    @_("expr LPAREN fcargs RPAREN")
     def func(self, p):
-        return ("func", p.ID, p.fcargs)
+        return ("func", p.expr, p.fcargs)
     
-    @_("ID LPAREN NEWLINE fcargs NEWLINE RPAREN")
+    @_("expr LPAREN NEWLINE fcargs NEWLINE RPAREN")
     def func(self, p):
-        return ("func", p.ID, p.fcargs)
+        return ("func", p.expr, p.fcargs)
     
-    @_("ID EXCLAMATION",
-       "ID LPAREN RPAREN")
+    @_("expr EXCLAMATION",
+       "expr LPAREN RPAREN")
     def func(self, p):
-        return ("func", p.ID, [])
+        return ("func", p.expr, [])
     
     @_("func")
     def expr(self, p):
@@ -906,10 +910,6 @@ class ZinkParser(Parser):
     @_("RSTRING")
     def expr(self, p):
         return ("RSTRING", p.RSTRING)
-    
-    @_("FSTRING")
-    def expr(self, p):
-        return ("FSTRING", p.FSTRING)
 
     @_("LPAREN expr RPAREN")
     def expr(self, p):
@@ -967,11 +967,11 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("length", p.expr)
     
-    @_("QUESTION expr %prec TYPE")
+    @_("expr QUESTION %prec TYPE")
     def expr(self, p):
         return ("get-type", p.expr)
     
-    @_("expr AS expr %prec CAST")
+    @_("expr AS expr")
     def expr(self, p):
         return ("cast", p.expr0, p.expr1)
     
@@ -994,9 +994,24 @@ class ZinkParser(Parser):
     @_("ELLIPSIS")
     def expr(self, p):
         return ("ellipsis",)
+    
+    @_("expr LARROW LPAREN args RPAREN")
+    def expr(self, p):
+        return ("lambda", p.expr, p.args)
+    
+    @_("SUPER_INIT")
+    def expr(self, p):
+        return ("super-init",)
+    
+    @_("LPAREN expr BETWEEN expr COMMA expr RPAREN")
+    def expr(self, p):
+        return ("between", p.expr0, p.expr1, p.expr2)
+    
+    @_("RAWSTRING")
+    def expr(self, p):
+        return ("raw", p.RAWSTRING)
 
 if __name__ == "__main__":
-    flexer = FormatLexer()
     lexer = ZinkLexer()
     parser = ZinkParser()
 
@@ -1014,7 +1029,7 @@ if __name__ == "__main__":
         def wt(node, dollar: str = None, indent: int = None):
             return walk_tree(node, dollar if dollar else td, indent if indent else nd)
         def jwt(nodes, sep: str, dollar: str = None, indent: int = None):
-            return sep.join(wt(node, dollar, indent) for node in nodes)
+            return sep.join(str(wt(node, dollar, indent)) for node in nodes)
         def unesc(s: str) -> str:
             return eval(f"\"{s}\"")
 
@@ -1028,24 +1043,20 @@ if __name__ == "__main__":
                     if (walked := wt(stmt)) != None: out.append(es + walked)
                 return out
             
-            elif node[0]== "FSTRING":
-                out = ""
-                for part in flexer.tokenize(node[1]):
-                    if part.type == "LITERAL": out += part.value
-                    if part.type == "EXPR": out += "{" + (_[0] if (_ := parse(part.value + ";")) else "\"\"") + "}"
-                    print(part)
-                return f"f\"{out}\""
+            elif node[0]== "raw":       return node[1]
 
             elif node[0]== "var":       return node[1] if node[1] != "$" else dollar
             elif node[0]== "NUMBER":    return str(node[1])
             elif node[0]== "STRING":    return f"\"{node[1]}\""
             elif node[0]== "BSTRING":   return f"b\"{node[1]}\""
             elif node[0]== "RSTRING":   return f"r'{node[1]}'"
+            elif node[0]== "RAWSTRING": return node[1]
             elif node[0]== "TRUE":      return "True"
             elif node[0]== "FALSE":     return "False"
             elif node[0]== "NONE":      return "None"
 
             elif node[0]== "ellipsis":                                          return f"..."
+            elif node[0]== "super-init":                                        return f"super().__init__"
 
             elif node[0]== "pass":                                              return f"pass"
             elif node[0]== "continue":                                          return f"continue"
@@ -1055,7 +1066,7 @@ if __name__ == "__main__":
             elif node[0]== "assert":                                            return f"assert {wt(node[1])}"
             elif node[0]== "raise":                                             return f"raise {wt(node[1])}"
 
-            elif node[0]== "func":                                              return f"{node[1]}({jwt(node[2], ", ")})"
+            elif node[0]== "func":                                              return f"{wt(node[1])}({jwt(node[2], ", ")})"
 
             elif node[0]== "tuple":                                             return f"({", ".join(wt(arg) for arg in node[1])}{"," if len(node[1]) == 1 else ""})"
             elif node[0]== "list":                                              return f"[{", ".join(wt(arg) for arg in node[1])}]"
@@ -1063,7 +1074,7 @@ if __name__ == "__main__":
 
             elif node[0]== "type":                                              return node[1]
             elif node[0]== "type-expr":                                         return wt(node[1])
-            elif node[0]== "typelist":                                          return f"{wt(node[1])}[{", ".join(wt(arg) for arg in node[2])}]"
+            elif node[0]== "typelist":                                          return f"{wt(node[1])}[{", ".join(str(wt(arg)) for arg in node[2])}]"
             elif node[0]== "typesel":                                           return f"({wt(node[1])} | {wt(node[2])})"
             elif node[0]== "arg":                                               return f"*{node[1]}"
             elif node[0]== "kwarg":                                             return f"**{node[1]}"
@@ -1112,6 +1123,7 @@ if __name__ == "__main__":
             elif node[0]== "cmp-le":                                            return f"({wt(node[1])} <= {wt(node[2])})"
             elif node[0]== "cmp-ge":                                            return f"({wt(node[1])} >= {wt(node[2])})"
             elif node[0]== "cmp-ne":                                            return f"({wt(node[1])} != {wt(node[2])})"
+            elif node[0]== "between":                                           return f"({wt(node[2])} <= {wt(node[1])} <= {wt(node[3])})"
             elif node[0]== "index":                                             return f"{wt(node[1])}[{wt(node[2])}]"
             elif node[0]== "index-from":                                        return f"{wt(node[1])}[{wt(node[2])}:]"
             elif node[0]== "index-to":                                          return f"{wt(node[1])}[:{wt(node[2])}]"
@@ -1152,6 +1164,8 @@ if __name__ == "__main__":
             elif node[0]== "try-else":          nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass\n{es}else:{"\n".join([""]+wt(node[2]))}"
             elif node[0]== "try-catch":         nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}"
             elif node[0]== "try-catch-else":    nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
+            elif node[0]== "match":             nd += 4;                        return f"match {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "case":              nd += 4;                        return f"case {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
             elif node[0]== "inc-before":                                        return f"({(tmp := wt(node[1]))} := {tmp}+1)"
             elif node[0]== "dec-before":                                        return f"({(tmp := wt(node[1]))} := {tmp}-1)"
             elif node[0]== "inc-after":                                         return f"(({(tmp := wt(node[1]))} := {tmp}+1)-1)"
@@ -1168,6 +1182,7 @@ if __name__ == "__main__":
             elif node[0]== "not":                                               return f"(not {wt(node[1])})"
             elif node[0]== "is":                                                return f"({wt(node[1])} is {wt(node[2])})"
             elif node[0]== "has":                                               return f"({wt(node[2])} in {wt(node[1])})"
+            elif node[0]== "lambda":                                            return f"(lambda {jwt(node[2], ", ")}: {wt(node[1])})"
 
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))
@@ -1182,6 +1197,8 @@ if __name__ == "__main__":
         "__builtins__": __builtins__
     }
     
+    print(end="\r          \r", flush=True)
+
     if len(sys.argv) > 2:
         with open(file := sys.argv[2], "r") as f:
             print(end=f"zink: {file} ... ", flush=True)
@@ -1193,7 +1210,7 @@ if __name__ == "__main__":
                 if len(sys.argv) > 3:
                     with open(out := sys.argv[3], "w") as f:
                         f.write("\n".join(parsed))
-                    print(f"\rzink: {file} -> {out}")
+                    print(f"\rzink: {file.ljust(16, " ")} -> {out}")
                 else:
                     out = "\n".join(parsed)
                     rung["__file__"] = file
