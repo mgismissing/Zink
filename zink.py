@@ -23,9 +23,20 @@ class FilteredLogger(object):
 
     critical = debug
 
+class FormatLexer(Lexer):
+    tokens = {
+        "LITERAL", "EXPR"
+    }
+
+    LITERAL = r"[^{}]+"
+    @_(r"\{[^{}]*\}")
+    def EXPR(self, t):
+        t.value = t.value[1:-1]
+        return t
+
 class ZinkLexer(Lexer):
     tokens = {
-        "ID", "NUMBER", "STRING", "BSTRING", "TRUE", "FALSE", "NONE",
+        "ID", "NUMBER", "STRING", "BSTRING", "FSTRING", "TRUE", "FALSE", "NONE",
         "EQUAL",
         "DB_PLUS", "DB_MINUS",
         "PLUS", "MINUS", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL",
@@ -60,6 +71,11 @@ class ZinkLexer(Lexer):
 
     @_(r'b"(?:[^"\\]|\\.)*"')
     def BSTRING(self, t):
+        t.value = t.value[2:-1]
+        return t
+
+    @_(r'f"(?:[^"\\{]|\\.|{[^}]*})*"')
+    def FSTRING(self, t):
         t.value = t.value[2:-1]
         return t
 
@@ -209,9 +225,9 @@ class ZinkParser(Parser):
         if token:
             lineno = getattr(token, "lineno", 0)
             if lineno:
-                sys.stderr.write(f"sly: Shit at line {lineno}, token={token.type}\n")
+                sys.stderr.write(f"sly: Error at line {lineno}, token={token.type}\n")
             else:
-                sys.stderr.write(f"sly: Shit, token={token.type}")
+                sys.stderr.write(f"sly: Error, token={token.type}")
         else:
             sys.stderr.write("sly: Parse error in input. EOF\n")
         exit(1)
@@ -271,6 +287,10 @@ class ZinkParser(Parser):
     def type(self, p):
         return ("typelist", p.type, p.types)
     
+    @_("type PIPE type")
+    def type(self, p):
+        return ("typesel", p.type0, p.type1)
+    
     @_("expr")
     def arg(self, p):
         return p.expr
@@ -284,6 +304,10 @@ class ZinkParser(Parser):
         return ("kwarg", p.ID)
     
     @_("args COMMA arg")
+    def args(self, p):
+        return p.args + [p.arg]
+    
+    @_("args COMMA NEWLINE arg")
     def args(self, p):
         return p.args + [p.arg]
     
@@ -323,6 +347,10 @@ class ZinkParser(Parser):
     def fargs(self, p):
         return p.fargs + [p.farg]
     
+    @_("fargs COMMA NEWLINE farg")
+    def fargs(self, p):
+        return p.fargs + [p.farg]
+    
     @_("farg")
     def fargs(self, p):
         return [p.farg]
@@ -339,6 +367,10 @@ class ZinkParser(Parser):
     def fcargs(self, p):
         return p.fcargs + [p.fcarg]
     
+    @_("fcargs COMMA NEWLINE fcarg")
+    def fcargs(self, p):
+        return p.fcargs + [p.fcarg]
+    
     @_("fcarg")
     def fcargs(self, p):
         return [p.fcarg]
@@ -348,6 +380,10 @@ class ZinkParser(Parser):
         return (p.expr0, p.expr1)
     
     @_("kwargs COMMA kwarg")
+    def kwargs(self, p):
+        return p.kwargs + [p.kwarg]
+    
+    @_("kwargs COMMA NEWLINE kwarg")
     def kwargs(self, p):
         return p.kwargs + [p.kwarg]
     
@@ -630,6 +666,10 @@ class ZinkParser(Parser):
     def tuple(self, p):
         return ("tuple", p.args)
     
+    @_("LBRACK NEWLINE args NEWLINE RBRACK")
+    def tuple(self, p):
+        return ("tuple", p.args)
+    
     @_("LBRACK RBRACK")
     def tuple(self, p):
         return ("tuple", [])
@@ -642,6 +682,10 @@ class ZinkParser(Parser):
     def list(self, p):
         return ("list", p.args)
     
+    @_("LBRACK NEWLINE args COMMA NEWLINE RBRACK")
+    def list(self, p):
+        return ("list", p.args)
+    
     @_("LBRACK COMMA RBRACK")
     def list(self, p):
         return ("list", [])
@@ -651,6 +695,10 @@ class ZinkParser(Parser):
         return p.list
     
     @_("LBRACK kwargs RBRACK")
+    def dict(self, p):
+        return ("dict", p.kwargs)
+    
+    @_("LBRACK NEWLINE kwargs NEWLINE RBRACK")
     def dict(self, p):
         return ("dict", p.kwargs)
     
@@ -825,6 +873,10 @@ class ZinkParser(Parser):
     @_("BSTRING")
     def expr(self, p):
         return ("BSTRING", p.BSTRING)
+    
+    @_("FSTRING")
+    def expr(self, p):
+        return ("FSTRING", p.FSTRING)
 
     @_("LPAREN expr RPAREN")
     def expr(self, p):
@@ -903,6 +955,7 @@ class ZinkParser(Parser):
         return ("ellipsis",)
 
 if __name__ == "__main__":
+    flexer = FormatLexer()
     lexer = ZinkLexer()
     parser = ZinkParser()
 
@@ -933,6 +986,15 @@ if __name__ == "__main__":
                 for stmt in node[1]:
                     if (walked := wt(stmt)) != None: out.append(es + walked)
                 return out
+            
+            elif node[0]== "FSTRING":
+                out = ""
+                for part in flexer.tokenize(node[1]):
+                    if part.type == "LITERAL": out += part.value
+                    if part.type == "EXPR": out += "{" + (_[0] if (_ := parse(part.value + ";")) else "\"\"") + "}"
+                    print(part)
+                return f"f\"{out}\""
+
             elif node[0]== "var":       return node[1] if node[1] != "$" else dollar
             elif node[0]== "NUMBER":    return str(node[1])
             elif node[0]== "STRING":    return f"\"{node[1]}\""
@@ -960,6 +1022,7 @@ if __name__ == "__main__":
             elif node[0]== "type":                                              return node[1]
             elif node[0]== "type-expr":                                         return wt(node[1])
             elif node[0]== "typelist":                                          return f"{wt(node[1])}[{", ".join(wt(arg) for arg in node[2])}]"
+            elif node[0]== "typesel":                                           return f"({wt(node[1])} | {wt(node[2])})"
             elif node[0]== "arg":                                               return f"*{node[1]}"
             elif node[0]== "kwarg":                                             return f"**{node[1]}"
             elif node[0]== "typed-arg":                                         return f"{node[1]}: {wt(node[2])}"
@@ -1060,6 +1123,9 @@ if __name__ == "__main__":
             elif node[0]== "is":                                                return f"({wt(node[1])} is {wt(node[2])})"
             elif node[0]== "has":                                               return f"({wt(node[2])} in {wt(node[1])})"
 
+    def parse(s: str):
+        parsed = parser.parse(lexer.tokenize(s))
+        return None if parsed == None else walk_tree(parsed)
 
     rung  = {
         "__name__": "__main__",
@@ -1075,16 +1141,15 @@ if __name__ == "__main__":
             print(end=f"zink: {file} ... ", flush=True)
             read = f.read()
             if not read.endswith("\n"): read += "\n"
-            parsed = parser.parse(lexer.tokenize(read))
+            parsed = parse(read)
             #print(parsed)
             if parsed != None:
-                conv = walk_tree(parsed)
                 if len(sys.argv) > 3:
                     with open(out := sys.argv[3], "w") as f:
-                        f.write("\n".join(conv))
+                        f.write("\n".join(parsed))
                     print(f"\rzink: {file} -> {out}")
                 else:
-                    out = "\n".join(conv)
+                    out = "\n".join(parsed)
                     rung["__file__"] = file
                     exec(out, rung)
                 
@@ -1094,7 +1159,8 @@ if __name__ == "__main__":
                 globals = {}
                 cmd = input("> ")
                 if cmd.lower() == "exit": exit()
-                parsed = parser.parse(lexer.tokenize(cmd+"\n\n"))
+                tokens = lexer.tokenize(cmd+"\n\n")
+                parsed = parser.parse(tokens)
                 print(parsed)
                 if parsed != None:
                     conv = walk_tree(parsed)
