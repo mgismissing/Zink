@@ -17,8 +17,8 @@ class FilteredLogger(object):
         if "defined, but not used" in tolog: return
         if "unused tokens" in tolog: return
         self.f.write("WARNING: " + tolog + "\n")
-        if "shift/reduce conflicts" in tolog: exit(1)
-        if "reduce/reduce conflicts" in tolog: exit(1)
+        if "shift/reduce conflict" in tolog: exit(1)
+        if "reduce/reduce conflict" in tolog: exit(1)
 
     def error(self, msg, *args, **kwargs):
         self.f.write("ERROR: " + (msg % args) + "\n")
@@ -91,7 +91,7 @@ class ZinkLexer(Lexer):
 
     DB_ARROW                = r"<->"
     DB_DARROW               = r"<=>"
-    LDARROW                     = r"<<-"
+    LDARROW                 = r"<<-"
     RDARROW                 = r"->>"
     LARROW                  = r"<-"
     RARROW                  = r"->"
