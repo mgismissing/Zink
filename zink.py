@@ -1222,7 +1222,7 @@ if __name__ == "__main__":
                 out = "\n".join(parsed)
                 rung["__file__"] = file
                 exec(out, rung)
-    if len(sys.argv) > 4:
+    elif len(sys.argv) > 4:
         src = sys.argv[-2]
         out = sys.argv[-1]
         for file in sys.argv[2:-2]:
@@ -1238,7 +1238,6 @@ if __name__ == "__main__":
                 else:
                     print(f"ERR")
                     exit(1)
-
     else:
         try:
             while True:
