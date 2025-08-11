@@ -693,8 +693,7 @@ class ZinkParser(Parser):
     def func(self, p):
         return ("func", p.expr, p.fcargs)
     
-    @_("expr EXCLAMATION",
-       "expr LPAREN RPAREN")
+    @_("expr EXCLAMATION")
     def func(self, p):
         return ("func", p.expr, [])
     
