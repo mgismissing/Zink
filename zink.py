@@ -657,6 +657,10 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("output", p.expr)
     
+    @_("MATMUL expr end")
+    def stmt(self, p):
+        return ("decorator", p.expr)
+    
     @_("LPAREN expr COLON_EQUAL expr RPAREN")
     def expr(self, p):
         return ("walrus", p.expr0, p.expr1)
@@ -1191,6 +1195,7 @@ if __name__ == "__main__":
             elif node[0]== "is":                                                return f"({wt(node[1])} is {wt(node[2])})"
             elif node[0]== "has":                                               return f"({wt(node[2])} in {wt(node[1])})"
             elif node[0]== "lambda":                                            return f"(lambda {jwt(node[2], ", ")}: {wt(node[1])})"
+            elif node[0]== "decorator":                                         return f"@{wt(node[1])}"
 
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))
