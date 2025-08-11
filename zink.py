@@ -27,7 +27,7 @@ class FilteredLogger(object):
 
 class ZinkLexer(Lexer):
     tokens = {
-        "ID", "NUMBER", "STRING", "BSTRING", "RSTRING", "RAWSTRING", "TRUE", "FALSE", "NONE", "SELF",
+        "ID", "NUMBER", "STRING", "BSTRING", "RSTRING", "RAWSTRING", "TRUE", "FALSE", "NONE",
         "EQUAL",
         "DB_PLUS", "DB_MINUS",
         "PLUS", "MINUS", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL",
@@ -85,7 +85,6 @@ class ZinkLexer(Lexer):
 
     OUTPUT                  = r":::"
 
-    SELF                    = r"@->"
     SELF_EQUAL              = r"@<-"
     SUPER_INIT              = r"@\^"
 
@@ -353,16 +352,28 @@ class ZinkParser(Parser):
     def farg(self, p):
         return ("default-typed-arg", p.ID, p.type, p.expr)
     
-    @_("fargs COMMA farg")
+    @_("fargs COMMA farg",
+       "fargs COMMA MATMUL farg",
+       "fargs COMMA CARET farg")
     def fargs(self, p):
+        if hasattr(p, "MATMUL"): return p.fargs + [("func-assign-self", p.farg)]
+        elif hasattr(p, "CARET"): return p.fargs + [("func-assign-super", p.farg)]
         return p.fargs + [p.farg]
     
-    @_("fargs COMMA NEWLINE farg")
+    @_("fargs COMMA NEWLINE farg",
+       "fargs COMMA NEWLINE MATMUL farg",
+       "fargs COMMA NEWLINE CARET farg")
     def fargs(self, p):
+        if hasattr(p, "MATMUL"): return p.fargs + [("func-assign-self", p.farg)]
+        elif hasattr(p, "CARET"): return p.fargs + [("func-assign-super", p.farg)]
         return p.fargs + [p.farg]
     
-    @_("farg")
+    @_("farg",
+       "MATMUL farg",
+       "CARET farg")
     def fargs(self, p):
+        if hasattr(p, "MATMUL"): return [("func-assign-self", p.farg)]
+        elif hasattr(p, "CARET"): return [("func-assign-super", p.farg)]
         return [p.farg]
     
     @_("arg")
@@ -615,19 +626,19 @@ class ZinkParser(Parser):
     
     @_("DEF ID end program DOT")
     def stmt(self, p):
-        return ("func-def-untyped", p.ID, [], p.program)
+        return (f"func-def-untyped", p.ID, [], p.program)
     
     @_("DEF ID LPAREN fargs RPAREN end program DOT")
     def stmt(self, p):
-        return ("func-def-untyped", p.ID, p.fargs, p.program)
+        return (f"func-def-untyped", p.ID, p.fargs, p.program)
     
     @_("DEF ID COLON type end program DOT")
     def stmt(self, p):
-        return ("func-def", p.ID, [], p.type, p.program)
+        return (f"func-def", p.ID, [], p.type, p.program)
     
     @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
-        return ("func-def", p.ID, p.fargs, p.type, p.program)
+        return (f"func-def", p.ID, p.fargs, p.type, p.program)
     
     @_("CLASS ID end program DOT")
     def stmt(self, p):
@@ -961,10 +972,6 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("member", p.expr0, p.expr1)
     
-    @_("SELF expr %prec MEMBER")
-    def expr(self, p):
-        return ("member-self", p.expr)
-    
     @_("USMARROW expr %prec STRING_UPPER")
     def expr(self, p):
         return ("string-upper", p.expr)
@@ -1017,6 +1024,14 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("between", p.expr0, p.expr1, p.expr2)
     
+    @_("MATMUL")
+    def expr(self, p):
+        return ("self",)
+    
+    @_("CARET")
+    def expr(self, p):
+        return ("super",)
+    
     @_("RAWSTRING")
     def expr(self, p):
         return ("raw", p.RAWSTRING)
@@ -1040,6 +1055,8 @@ if __name__ == "__main__":
             return walk_tree(node, dollar if dollar else td, indent if indent else nd)
         def jwt(nodes, sep: str, dollar: str = None, indent: int = None):
             return sep.join(str(wt(node, dollar, indent)) for node in nodes)
+        def jfwt(nodes, func, sep: str, dollar: str = None, indent: int = None):
+            return jwt(filter(func, nodes), sep, dollar, indent)
         def unesc(s: str) -> str:
             return eval(f"\"{s}\"")
 
@@ -1065,137 +1082,140 @@ if __name__ == "__main__":
             elif node[0]== "FALSE":     return "False"
             elif node[0]== "NONE":      return "None"
 
-            elif node[0]== "ellipsis":                                          return f"..."
-            elif node[0]== "super-init":                                        return f"super().__init__"
+            elif node[0]== "ellipsis":                                              return f"..."
+            elif node[0]== "super-init":                                            return f"super().__init__"
 
-            elif node[0]== "output":                                            return f"print({wt(node[1])})"
+            elif node[0]== "output":                                                return f"print({wt(node[1])})"
 
-            elif node[0]== "pass":                                              return f"pass"
-            elif node[0]== "continue":                                          return f"continue"
-            elif node[0]== "break":                                             return f"break"
-            elif node[0]== "global":                                            return f"global {wt(node[1])}"
+            elif node[0]== "pass":                                                  return f"pass"
+            elif node[0]== "continue":                                              return f"continue"
+            elif node[0]== "break":                                                 return f"break"
+            elif node[0]== "global":                                                return f"global {wt(node[1])}"
 
-            elif node[0]== "assert":                                            return f"assert {wt(node[1])}"
-            elif node[0]== "raise":                                             return f"raise {wt(node[1])}"
+            elif node[0]== "assert":                                                return f"assert {wt(node[1])}"
+            elif node[0]== "raise":                                                 return f"raise {wt(node[1])}"
 
-            elif node[0]== "func":                                              return f"{wt(node[1])}({jwt(node[2], ", ")})"
+            elif node[0]== "func":                                                  return f"{wt(node[1])}({jwt(node[2], ", ")})"
 
-            elif node[0]== "tuple":                                             return f"({", ".join(wt(arg) for arg in node[1])}{"," if len(node[1]) == 1 else ""})"
-            elif node[0]== "list":                                              return f"[{", ".join(wt(arg) for arg in node[1])}]"
-            elif node[0]== "dict":                                              return "{"+(", ".join(f"{wt(k)}: {wt(v)}" for k, v in node[1]))+"}"
+            elif node[0]== "tuple":                                                 return f"({", ".join(wt(arg) for arg in node[1])}{"," if len(node[1]) == 1 else ""})"
+            elif node[0]== "list":                                                  return f"[{", ".join(wt(arg) for arg in node[1])}]"
+            elif node[0]== "dict":                                                  return "{"+(", ".join(f"{wt(k)}: {wt(v)}" for k, v in node[1]))+"}"
 
-            elif node[0]== "type":                                              return node[1]
-            elif node[0]== "type-expr":                                         return wt(node[1])
-            elif node[0]== "typelist":                                          return f"{wt(node[1])}[{", ".join(str(wt(arg)) for arg in node[2])}]"
-            elif node[0]== "typesel":                                           return f"({wt(node[1])} | {wt(node[2])})"
-            elif node[0]== "arg":                                               return f"*{node[1]}"
-            elif node[0]== "kwarg":                                             return f"**{node[1]}"
-            elif node[0]== "typed-arg":                                         return f"{node[1]}: {wt(node[2])}"
-            elif node[0]== "default-arg":                                       return f"{node[1]} = {wt(node[2])}"
-            elif node[0]== "default-typed-arg":                                 return f"{node[1]}: {wt(node[2])} = {wt(node[3])}"
+            elif node[0]== "type":                                                  return node[1]
+            elif node[0]== "type-expr":                                             return wt(node[1])
+            elif node[0]== "typelist":                                              return f"{wt(node[1])}[{", ".join(str(wt(arg)) for arg in node[2])}]"
+            elif node[0]== "typesel":                                               return f"({wt(node[1])} | {wt(node[2])})"
+            elif node[0]== "arg":                                                   return f"*{node[1]}"
+            elif node[0]== "kwarg":                                                 return f"**{node[1]}"
+            elif node[0]== "typed-arg":                                             return f"{node[1]}: {wt(node[2])}"
+            elif node[0]== "default-arg":                                           return f"{node[1]} = {wt(node[2])}"
+            elif node[0]== "default-typed-arg":                                     return f"{node[1]}: {wt(node[2])} = {wt(node[3])}"
 
-            if node[0]  == "set":               td = jwt(node[1], ", ");        return f"{td} = {jwt(node[2], ", ")}"
-            elif node[0]== "set-add":           td = wt(node[1]);               return f"{td} += {wt(node[2])}"
-            elif node[0]== "set-subtract":      td = wt(node[1]);               return f"{td} -= {wt(node[2])}"
-            elif node[0]== "set-multiply":      td = wt(node[1]);               return f"{td} *= {wt(node[2])}"
-            elif node[0]== "set-divide":        td = wt(node[1]);               return f"{td} /= {wt(node[2])}"
-            elif node[0]== "set-dot":           td = wt(node[1]);               return f"{td} = {td}.{wt(node[2])}"
-            elif node[0]== "set-power":         td = wt(node[1]);               return f"{td} **= {wt(node[2])}"
-            elif node[0]== "set-floor-divide":  td = wt(node[1]);               return f"{td} //= {wt(node[2])}"
-            elif node[0]== "set-modulo":        td = wt(node[1]);               return f"{td} %= {wt(node[2])}"
-            elif node[0]== "set-matmul":        td = wt(node[1]);               return f"{td} @= {wt(node[2])}"
-            elif node[0]== "set-bitwise-and":   td = wt(node[1]);               return f"{td} &= {wt(node[2])}"
-            elif node[0]== "set-bitwise-or":    td = wt(node[1]);               return f"{td} |= {wt(node[2])}"
-            elif node[0]== "set-bitwise-xor":   td = wt(node[1]);               return f"{td} ^= {wt(node[2])}"
-            elif node[0]== "set-bitwise-not":   td = wt(node[1]);               return f"{td} = ~{td}"
-            elif node[0]== "set-bitwise-shl":   td = wt(node[1]);               return f"{td} <<= {wt(node[2])}"
-            elif node[0]== "set-bitwise-shr":   td = wt(node[1]);               return f"{td} >>= {wt(node[2])}"
-            elif node[0]== "set-self":                                          return f"self.{(_ := wt(node[1]))} = {_}"
-            elif node[0]== "set-cast":          td = wt(node[1]);               return f"{td} = type({wt(node[2])}())({td})"
-            elif node[0]== "add":                                               return f"({wt(node[1])} + {wt(node[2])})"
-            elif node[0]== "subtract":                                          return f"({wt(node[1])} - {wt(node[2])})"
-            elif node[0]== "multiply":                                          return f"({wt(node[1])} * {wt(node[2])})"
-            elif node[0]== "divide":                                            return f"({wt(node[1])} / {wt(node[2])})"
-            elif node[0]== "unary-plus":                                        return f"(+{wt(node[1])})"
-            elif node[0]== "unary-minus":                                       return f"(-{wt(node[1])})"
-            elif node[0]== "walrus":            td = wt(node[1]);               return f"({wt(node[1])} := {wt(node[2])})"
-            elif node[0]== "power":                                             return f"({wt(node[1])} ** {wt(node[2])})"
-            elif node[0]== "floor-divide":                                      return f"({wt(node[1])} // {wt(node[2])})"
-            elif node[0]== "modulo":                                            return f"({wt(node[1])} % {wt(node[2])})"
-            elif node[0]== "matmul":                                            return f"({wt(node[1])} @ {wt(node[2])})"
-            elif node[0]== "bitwise-and":                                       return f"({wt(node[1])} & {wt(node[2])})"
-            elif node[0]== "bitwise-or":                                        return f"({wt(node[1])} | {wt(node[2])})"
-            elif node[0]== "bitwise-xor":                                       return f"({wt(node[1])} ^ {wt(node[2])})"
-            elif node[0]== "bitwise-not":                                       return f"(~{wt(node[1])})"
-            elif node[0]== "bitwise-shl":                                       return f"({wt(node[1])} << {wt(node[2])})"
-            elif node[0]== "bitwise-shr":                                       return f"({wt(node[1])} >> {wt(node[2])})"
-            elif node[0]== "cmp-e":                                             return f"({wt(node[1])} == {wt(node[2])})"
-            elif node[0]== "cmp-g":                                             return f"({wt(node[1])} > {wt(node[2])})"
-            elif node[0]== "cmp-l":                                             return f"({wt(node[1])} < {wt(node[2])})"
-            elif node[0]== "cmp-le":                                            return f"({wt(node[1])} <= {wt(node[2])})"
-            elif node[0]== "cmp-ge":                                            return f"({wt(node[1])} >= {wt(node[2])})"
-            elif node[0]== "cmp-ne":                                            return f"({wt(node[1])} != {wt(node[2])})"
-            elif node[0]== "between":                                           return f"({wt(node[2])} <= {wt(node[1])} <= {wt(node[3])})"
-            elif node[0]== "index":                                             return f"{wt(node[1])}[{wt(node[2])}]"
-            elif node[0]== "index-from":                                        return f"{wt(node[1])}[{wt(node[2])}:]"
-            elif node[0]== "index-to":                                          return f"{wt(node[1])}[:{wt(node[2])}]"
-            elif node[0]== "index-from-to":                                     return f"{wt(node[1])}[{wt(node[2])}:{wt(node[3])}]"
-            elif node[0]== "index-step":                                        return f"{wt(node[1])}[::{wt(node[2])}]"
-            elif node[0]== "index-from-step":                                   return f"{wt(node[1])}[{wt(node[2])}::{wt(node[3])}]"
-            elif node[0]== "index-to-step":                                     return f"{wt(node[1])}[:{wt(node[2])}:{wt(node[3])}]"
-            elif node[0]== "index-from-to-step":                                return f"{wt(node[1])}[{wt(node[2])}:{wt(node[3])}:{wt(node[4])}]"
-            elif node[0]== "list-remove":                                       return f"{wt(node[2])} = {wt(node[1])}.pop()"
-            elif node[0]== "list-append":                                       return f"{wt(node[1])}.append({wt(node[2])})"
-            elif node[0]== "member":                                            return f"{wt(node[1])}.{wt(node[2])}"
-            elif node[0]== "member-self":                                       return f"self.{wt(node[1])}"
-            elif node[0]== "string-upper":                                      return f"{wt(node[1])}.upper()"
-            elif node[0]== "string-lower":                                      return f"{wt(node[1])}.lower()"
-            elif node[0]== "range-inc-inc":                                     return f"range({wt(node[1])}, {wt(node[2])}+1, {wt(node[3])})"
-            elif node[0]== "range-inc-exc":                                     return f"range({wt(node[1])}, {wt(node[2])}, {wt(node[3])})"
-            elif node[0]== "range-exc-inc":                                     return f"range({wt(node[1])}+1, {wt(node[2])}+1, {wt(node[3])})"
-            elif node[0]== "range-exc-exc":                                     return f"range({wt(node[1])}+1, {wt(node[2])}, {wt(node[3])})"
-            elif node[0]== "range":                                             return f"range({wt(node[1])}, {wt(node[2])}, {wt(node[3])})"
-            elif node[0]== "length":                                            return f"len({wt(node[1])})"
-            elif node[0]== "get-type":                                          return f"type({wt(node[1])})"
-            elif node[0]== "cast":                                              return f"type({wt(node[2])}())({wt(node[1])})"
-            elif node[0]== "use":                                               return f"import {node[1]}"
-            elif node[0]== "use-as":                                            return f"import {node[1]} as {node[2]}"
-            elif node[0]== "use-from":                                          return f"from {node[2]} import {node[1]}"
-            elif node[0]== "use-as-from":                                       return f"from {node[3]} import {node[1]} as {node[2]}"
-            elif node[0]== "while":             nd += 4;                        return f"while {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "for":               nd += 4;                        return f"for {", ".join(wt(arg) for arg in node[1])} in {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "for-at":            nd += 4;                        return f"for {wt(node[2])}, ({", ".join(wt(arg) for arg in node[1])}) in enumerate({wt(node[3])}):{"\n".join([""]+wt(node[4]))}"
-            elif node[0]== "if":                nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "if-else":           nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "if-elif":           nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}{"\n".join([""]+list(es+f"elif {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[3]))}"
-            elif node[0]== "if-elif-else":      nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}{"\n".join([""]+list(es+f"elif {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[3]))}\n{es}else:{"\n".join([""]+wt(node[4]))}"
-            elif node[0]== "generator":         td = wt(node[1]);               return f"({td} for {", ".join(wt(arg) for arg in node[2])} in {(wt(node[3]))})"
-            elif node[0]== "generator-at":      td = f"({jwt(node[2], ", ")})"; return f"({wt(node[1])} for {wt(node[3])}, {td} in enumerate({wt(node[4])}))"
-            elif node[0]== "ternary":                                           return f"({wt(node[1])} if {wt(node[2])} else {wt(node[3])})"
-            elif node[0]== "try":               nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass"
-            elif node[0]== "try-else":          nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass\n{es}else:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "try-catch":         nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}"
-            elif node[0]== "try-catch-else":    nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "match":             nd += 4;                        return f"match {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "case":              nd += 4;                        return f"case {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "inc-before":                                        return f"({(tmp := wt(node[1]))} := {tmp}+1)"
-            elif node[0]== "dec-before":                                        return f"({(tmp := wt(node[1]))} := {tmp}-1)"
-            elif node[0]== "inc-after":                                         return f"(({(tmp := wt(node[1]))} := {tmp}+1)-1)"
-            elif node[0]== "dec-after":                                         return f"(({(tmp := wt(node[1]))} := {tmp}-1)+1)"
-            elif node[0]== "func-def":          nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}) -> {wt(node[3])}:{"\n".join([""]+wt(node[4]))}"
-            elif node[0]== "func-def-untyped":  nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}):{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "class-def":         nd += 4;                        return f"class {node[1]}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "class-def-from":    nd += 4;                        return f"class {node[1]}({node[2]}):{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "with":              nd += 4;                        return f"with {wt(node[1])} as {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "return":                                            return f"return {wt(node[1])}"
-            elif node[0]== "del":                                               return f"del {wt(node[1])}"
-            elif node[0]== "and":                                               return f"({wt(node[1])} and {wt(node[2])})"
-            elif node[0]== "or":                                                return f"({wt(node[1])} or {wt(node[2])})"
-            elif node[0]== "not":                                               return f"(not {wt(node[1])})"
-            elif node[0]== "is":                                                return f"({wt(node[1])} is {wt(node[2])})"
-            elif node[0]== "has":                                               return f"({wt(node[2])} in {wt(node[1])})"
-            elif node[0]== "lambda":                                            return f"(lambda {jwt(node[2], ", ")}: {wt(node[1])})"
-            elif node[0]== "decorator":                                         return f"@{wt(node[1])}"
+            if node[0]  == "set":                   td = jwt(node[1], ", ");        return f"{td} = {jwt(node[2], ", ")}"
+            elif node[0]== "set-add":               td = wt(node[1]);               return f"{td} += {wt(node[2])}"
+            elif node[0]== "set-subtract":          td = wt(node[1]);               return f"{td} -= {wt(node[2])}"
+            elif node[0]== "set-multiply":          td = wt(node[1]);               return f"{td} *= {wt(node[2])}"
+            elif node[0]== "set-divide":            td = wt(node[1]);               return f"{td} /= {wt(node[2])}"
+            elif node[0]== "set-dot":               td = wt(node[1]);               return f"{td} = {td}.{wt(node[2])}"
+            elif node[0]== "set-power":             td = wt(node[1]);               return f"{td} **= {wt(node[2])}"
+            elif node[0]== "set-floor-divide":      td = wt(node[1]);               return f"{td} //= {wt(node[2])}"
+            elif node[0]== "set-modulo":            td = wt(node[1]);               return f"{td} %= {wt(node[2])}"
+            elif node[0]== "set-matmul":            td = wt(node[1]);               return f"{td} @= {wt(node[2])}"
+            elif node[0]== "set-bitwise-and":       td = wt(node[1]);               return f"{td} &= {wt(node[2])}"
+            elif node[0]== "set-bitwise-or":        td = wt(node[1]);               return f"{td} |= {wt(node[2])}"
+            elif node[0]== "set-bitwise-xor":       td = wt(node[1]);               return f"{td} ^= {wt(node[2])}"
+            elif node[0]== "set-bitwise-not":       td = wt(node[1]);               return f"{td} = ~{td}"
+            elif node[0]== "set-bitwise-shl":       td = wt(node[1]);               return f"{td} <<= {wt(node[2])}"
+            elif node[0]== "set-bitwise-shr":       td = wt(node[1]);               return f"{td} >>= {wt(node[2])}"
+            elif node[0]== "set-self":                                              return f"self.{(_ := wt(node[1]))} = {_}"
+            elif node[0]== "set-cast":              td = wt(node[1]);               return f"{td} = type({wt(node[2])}())({td})"
+            elif node[0]== "add":                                                   return f"({wt(node[1])} + {wt(node[2])})"
+            elif node[0]== "subtract":                                              return f"({wt(node[1])} - {wt(node[2])})"
+            elif node[0]== "multiply":                                              return f"({wt(node[1])} * {wt(node[2])})"
+            elif node[0]== "divide":                                                return f"({wt(node[1])} / {wt(node[2])})"
+            elif node[0]== "unary-plus":                                            return f"(+{wt(node[1])})"
+            elif node[0]== "unary-minus":                                           return f"(-{wt(node[1])})"
+            elif node[0]== "walrus":                td = wt(node[1]);               return f"({wt(node[1])} := {wt(node[2])})"
+            elif node[0]== "power":                                                 return f"({wt(node[1])} ** {wt(node[2])})"
+            elif node[0]== "floor-divide":                                          return f"({wt(node[1])} // {wt(node[2])})"
+            elif node[0]== "modulo":                                                return f"({wt(node[1])} % {wt(node[2])})"
+            elif node[0]== "matmul":                                                return f"({wt(node[1])} @ {wt(node[2])})"
+            elif node[0]== "bitwise-and":                                           return f"({wt(node[1])} & {wt(node[2])})"
+            elif node[0]== "bitwise-or":                                            return f"({wt(node[1])} | {wt(node[2])})"
+            elif node[0]== "bitwise-xor":                                           return f"({wt(node[1])} ^ {wt(node[2])})"
+            elif node[0]== "bitwise-not":                                           return f"(~{wt(node[1])})"
+            elif node[0]== "bitwise-shl":                                           return f"({wt(node[1])} << {wt(node[2])})"
+            elif node[0]== "bitwise-shr":                                           return f"({wt(node[1])} >> {wt(node[2])})"
+            elif node[0]== "cmp-e":                                                 return f"({wt(node[1])} == {wt(node[2])})"
+            elif node[0]== "cmp-g":                                                 return f"({wt(node[1])} > {wt(node[2])})"
+            elif node[0]== "cmp-l":                                                 return f"({wt(node[1])} < {wt(node[2])})"
+            elif node[0]== "cmp-le":                                                return f"({wt(node[1])} <= {wt(node[2])})"
+            elif node[0]== "cmp-ge":                                                return f"({wt(node[1])} >= {wt(node[2])})"
+            elif node[0]== "cmp-ne":                                                return f"({wt(node[1])} != {wt(node[2])})"
+            elif node[0]== "between":                                               return f"({wt(node[2])} <= {wt(node[1])} <= {wt(node[3])})"
+            elif node[0]== "index":                                                 return f"{wt(node[1])}[{wt(node[2])}]"
+            elif node[0]== "index-from":                                            return f"{wt(node[1])}[{wt(node[2])}:]"
+            elif node[0]== "index-to":                                              return f"{wt(node[1])}[:{wt(node[2])}]"
+            elif node[0]== "index-from-to":                                         return f"{wt(node[1])}[{wt(node[2])}:{wt(node[3])}]"
+            elif node[0]== "index-step":                                            return f"{wt(node[1])}[::{wt(node[2])}]"
+            elif node[0]== "index-from-step":                                       return f"{wt(node[1])}[{wt(node[2])}::{wt(node[3])}]"
+            elif node[0]== "index-to-step":                                         return f"{wt(node[1])}[:{wt(node[2])}:{wt(node[3])}]"
+            elif node[0]== "index-from-to-step":                                    return f"{wt(node[1])}[{wt(node[2])}:{wt(node[3])}:{wt(node[4])}]"
+            elif node[0]== "list-remove":                                           return f"{wt(node[2])} = {wt(node[1])}.pop()"
+            elif node[0]== "list-append":                                           return f"{wt(node[1])}.append({wt(node[2])})"
+            elif node[0]== "member":                                                return f"{wt(node[1])}.{wt(node[2])}"
+            elif node[0]== "string-upper":                                          return f"{wt(node[1])}.upper()"
+            elif node[0]== "string-lower":                                          return f"{wt(node[1])}.lower()"
+            elif node[0]== "range-inc-inc":                                         return f"range({wt(node[1])}, {wt(node[2])}+1, {wt(node[3])})"
+            elif node[0]== "range-inc-exc":                                         return f"range({wt(node[1])}, {wt(node[2])}, {wt(node[3])})"
+            elif node[0]== "range-exc-inc":                                         return f"range({wt(node[1])}+1, {wt(node[2])}+1, {wt(node[3])})"
+            elif node[0]== "range-exc-exc":                                         return f"range({wt(node[1])}+1, {wt(node[2])}, {wt(node[3])})"
+            elif node[0]== "range":                                                 return f"range({wt(node[1])}, {wt(node[2])}, {wt(node[3])})"
+            elif node[0]== "length":                                                return f"len({wt(node[1])})"
+            elif node[0]== "get-type":                                              return f"type({wt(node[1])})"
+            elif node[0]== "cast":                                                  return f"type({wt(node[2])}())({wt(node[1])})"
+            elif node[0]== "use":                                                   return f"import {node[1]}"
+            elif node[0]== "use-as":                                                return f"import {node[1]} as {node[2]}"
+            elif node[0]== "use-from":                                              return f"from {node[2]} import {node[1]}"
+            elif node[0]== "use-as-from":                                           return f"from {node[3]} import {node[1]} as {node[2]}"
+            elif node[0]== "while":                 nd += 4;                        return f"while {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "for":                   nd += 4;                        return f"for {", ".join(wt(arg) for arg in node[1])} in {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
+            elif node[0]== "for-at":                nd += 4;                        return f"for {wt(node[2])}, ({", ".join(wt(arg) for arg in node[1])}) in enumerate({wt(node[3])}):{"\n".join([""]+wt(node[4]))}"
+            elif node[0]== "if":                    nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "if-else":               nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
+            elif node[0]== "if-elif":               nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}{"\n".join([""]+list(es+f"elif {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[3]))}"
+            elif node[0]== "if-elif-else":          nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}{"\n".join([""]+list(es+f"elif {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[3]))}\n{es}else:{"\n".join([""]+wt(node[4]))}"
+            elif node[0]== "generator":             td = wt(node[1]);               return f"({td} for {", ".join(wt(arg) for arg in node[2])} in {(wt(node[3]))})"
+            elif node[0]== "generator-at":          td = f"({jwt(node[2], ", ")})"; return f"({wt(node[1])} for {wt(node[3])}, {td} in enumerate({wt(node[4])}))"
+            elif node[0]== "ternary":                                               return f"({wt(node[1])} if {wt(node[2])} else {wt(node[3])})"
+            elif node[0]== "try":                   nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass"
+            elif node[0]== "try-else":              nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass\n{es}else:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "try-catch":             nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}"
+            elif node[0]== "try-catch-else":        nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
+            elif node[0]== "match":                 nd += 4;                        return f"match {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "case":                  nd += 4;                        return f"case {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "inc-before":                                            return f"({(tmp := wt(node[1]))} := {tmp}+1)"
+            elif node[0]== "dec-before":                                            return f"({(tmp := wt(node[1]))} := {tmp}-1)"
+            elif node[0]== "inc-after":                                             return f"(({(tmp := wt(node[1]))} := {tmp}+1)-1)"
+            elif node[0]== "dec-after":                                             return f"(({(tmp := wt(node[1]))} := {tmp}-1)+1)"
+            elif node[0]== "func-def":              nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}) -> {wt(node[3])}:{"\n".join([""]+([f"{" " * nd}super().__init__({", ".join(f"{(wt(arg)+":").split(":")[0]}={(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-super", node[2]))})"] if len(list(filter(lambda _: _[0] == "func-assign-super", node[2]))) > 0 else [])+[f"{" " * nd}self.{(wt(arg)+":").split(":")[0]} = {(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-self", node[2])]+wt(node[4]))}"
+            elif node[0]== "func-def-untyped":      nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}):{"\n".join([""]+([f"{" " * nd}super().__init__({", ".join(f"{(wt(arg)+":").split(":")[0]}={(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-super", node[2]))})"] if len(list(filter(lambda _: _[0] == "func-assign-super", node[2]))) > 0 else [])+[f"{" " * nd}self.{(wt(arg)+":").split(":")[0]} = {(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-self", node[2])]+wt(node[3]))}"
+            elif node[0]== "func-assign-self":                                      return wt(node[1])
+            elif node[0]== "func-assign-super":                                     return wt(node[1])
+            elif node[0]== "class-def":             nd += 4;                        return f"class {node[1]}:{"\n".join([""]+wt(node[2]))}"
+            elif node[0]== "class-def-from":        nd += 4;                        return f"class {node[1]}({node[2]}):{"\n".join([""]+wt(node[3]))}"
+            elif node[0]== "with":                  nd += 4;                        return f"with {wt(node[1])} as {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
+            elif node[0]== "return":                                                return f"return {wt(node[1])}"
+            elif node[0]== "del":                                                   return f"del {wt(node[1])}"
+            elif node[0]== "and":                                                   return f"({wt(node[1])} and {wt(node[2])})"
+            elif node[0]== "or":                                                    return f"({wt(node[1])} or {wt(node[2])})"
+            elif node[0]== "not":                                                   return f"(not {wt(node[1])})"
+            elif node[0]== "is":                                                    return f"({wt(node[1])} is {wt(node[2])})"
+            elif node[0]== "has":                                                   return f"({wt(node[2])} in {wt(node[1])})"
+            elif node[0]== "lambda":                                                return f"(lambda {jwt(node[2], ", ")}: {wt(node[1])})"
+            elif node[0]== "decorator":                                             return f"@{wt(node[1])}"
+            elif node[0]== "self":                                                  return f"self"
+            elif node[0]== "super":                                                 return f"super()"
 
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))

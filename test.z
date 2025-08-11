@@ -1,0 +1,15 @@
+class Animal
+    def __init__(@, @name: str): None;;.
+
+    def eat(@, food: str): None
+        print(@.name, "is eating", food)
+    .
+.
+
+class Bird from Animal
+    def __init__(@, ^name: str, @color: str): None;;.
+
+    def fly(@): None
+        print(@.color, @.name, "is flying")
+    .
+.
