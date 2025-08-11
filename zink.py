@@ -71,9 +71,9 @@ class ZinkLexer(Lexer):
         t.value = t.value[2:-1]
         return t
     
-    @_(r'R"(?:[^"\\]|\\.)*"')
+    @_(r'`(?:[^"\\]|\\.)*`')
     def RAWSTRING(self, t):
-        t.value = t.value[2:-1]
+        t.value = t.value[1:-1]
         return t
 
     ID                      = r"[a-zA-Z_][a-zA-Z0-9_]*"
@@ -253,7 +253,7 @@ class ZinkParser(Parser):
         ("right", "UNARY_PLUS", "UNARY_MINUS", "STRING_UPPER", "STRING_LOWER", "LENGTH", "TYPE", "TILDE"),
         ("left", "INCREMENT", "DECREMENT"),
         ("left", "AS"),
-        ("left", "MEMBER", "DOT", "LPAREN"),
+        ("left", "MEMBER", "DOT", "LPAREN", "EXCLAMATION"),
     )
 
     @_("stmts")
