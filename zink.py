@@ -1,5 +1,6 @@
 import sys
 from sly import Lexer, Parser
+import translators
 
 print(end="zink: ... ", flush=True)
 
@@ -274,7 +275,7 @@ class ZinkParser(Parser):
     
     @_("LBRACE expr RBRACE")
     def type(self, p):
-        return ("type-expr", p.expr)
+        return ("type_expr", p.expr)
     
     @_("NONE")
     def type(self, p):
@@ -330,7 +331,7 @@ class ZinkParser(Parser):
     
     @_("ID COLON type")
     def targ(self, p):
-        return ("typed-arg", p.ID, p.type)
+        return ("typed_arg", p.ID, p.type)
     
     @_("targs COMMA targ")
     def targs(self, p):
@@ -346,34 +347,34 @@ class ZinkParser(Parser):
     
     @_("ID EQUAL expr")
     def farg(self, p):
-        return ("default-arg", p.ID, p.expr)
+        return ("default_arg", p.ID, p.expr)
     
     @_("ID COLON type EQUAL expr")
     def farg(self, p):
-        return ("default-typed-arg", p.ID, p.type, p.expr)
+        return ("default_typed_arg", p.ID, p.type, p.expr)
     
     @_("fargs COMMA farg",
        "fargs COMMA MATMUL farg",
        "fargs COMMA CARET farg")
     def fargs(self, p):
-        if hasattr(p, "MATMUL"): return p.fargs + [("func-assign-self", p.farg)]
-        elif hasattr(p, "CARET"): return p.fargs + [("func-assign-super", p.farg)]
+        if hasattr(p, "MATMUL"): return p.fargs + [("func_assign_self", p.farg)]
+        elif hasattr(p, "CARET"): return p.fargs + [("func_assign_super", p.farg)]
         return p.fargs + [p.farg]
     
     @_("fargs COMMA NEWLINE farg",
        "fargs COMMA NEWLINE MATMUL farg",
        "fargs COMMA NEWLINE CARET farg")
     def fargs(self, p):
-        if hasattr(p, "MATMUL"): return p.fargs + [("func-assign-self", p.farg)]
-        elif hasattr(p, "CARET"): return p.fargs + [("func-assign-super", p.farg)]
+        if hasattr(p, "MATMUL"): return p.fargs + [("func_assign_self", p.farg)]
+        elif hasattr(p, "CARET"): return p.fargs + [("func_assign_super", p.farg)]
         return p.fargs + [p.farg]
     
     @_("farg",
        "MATMUL farg",
        "CARET farg")
     def fargs(self, p):
-        if hasattr(p, "MATMUL"): return [("func-assign-self", p.farg)]
-        elif hasattr(p, "CARET"): return [("func-assign-super", p.farg)]
+        if hasattr(p, "MATMUL"): return [("func_assign_self", p.farg)]
+        elif hasattr(p, "CARET"): return [("func_assign_super", p.farg)]
         return [p.farg]
     
     @_("arg")
@@ -382,7 +383,7 @@ class ZinkParser(Parser):
     
     @_("ID EQUAL expr")
     def fcarg(self, p):
-        return ("default-arg", p.ID, p.expr)
+        return ("default_arg", p.ID, p.expr)
     
     @_("fcargs COMMA fcarg")
     def fcargs(self, p):
@@ -458,79 +459,79 @@ class ZinkParser(Parser):
     
     @_("expr PLUS_EQUAL expr end")
     def stmt(self, p):
-        return ("set-add", p.expr0, p.expr1)
+        return ("set_add", p.expr0, p.expr1)
     
     @_("expr MINUS_EQUAL expr end")
     def stmt(self, p):
-        return ("set-subtract", p.expr0, p.expr1)
+        return ("set_subtract", p.expr0, p.expr1)
     
     @_("expr ASTERISK_EQUAL expr end")
     def stmt(self, p):
-        return ("set-multiply", p.expr0, p.expr1)
+        return ("set_multiply", p.expr0, p.expr1)
     
     @_("expr SLASH_EQUAL expr end")
     def stmt(self, p):
-        return ("set-divide", p.expr0, p.expr1)
+        return ("set_divide", p.expr0, p.expr1)
     
     @_("expr DOT_EQUAL expr end")
     def stmt(self, p):
-        return ("set-dot", p.expr0, p.expr1)
+        return ("set_dot", p.expr0, p.expr1)
     
     @_("expr PERCENTAGE_EQUAL expr end")
     def stmt(self, p):
-        return ("set-modulo", p.expr0, p.expr1)
+        return ("set_modulo", p.expr0, p.expr1)
     
     @_("expr DB_ASTERISK_EQUAL expr end")
     def stmt(self, p):
-        return ("set-power", p.expr0, p.expr1)
+        return ("set_power", p.expr0, p.expr1)
     
     @_("expr DB_SLASH_EQUAL expr end")
     def stmt(self, p):
-        return ("set-floor-divide", p.expr0, p.expr1)
+        return ("set_floor_divide", p.expr0, p.expr1)
     
     @_("expr MATMUL_EQUAL expr end")
     def stmt(self, p):
-        return ("set-matmul", p.expr0, p.expr1)
+        return ("set_matmul", p.expr0, p.expr1)
     
     @_("expr AMPERSAND_EQUAL expr end")
     def stmt(self, p):
-        return ("set-bitwise-and", p.expr0, p.expr1)
+        return ("set_bitwise_and", p.expr0, p.expr1)
     
     @_("expr PIPE_EQUAL expr end")
     def stmt(self, p):
-        return ("set-bitwise-or", p.expr0, p.expr1)
+        return ("set_bitwise_or", p.expr0, p.expr1)
     
     @_("expr CARET_EQUAL expr end")
     def stmt(self, p):
-        return ("set-bitwise-xor", p.expr0, p.expr1)
+        return ("set_bitwise_xor", p.expr0, p.expr1)
     
     @_("expr TILDE end")
     def stmt(self, p):
-        return ("set-bitwise-not", p.expr)
+        return ("set_bitwise_not", p.expr)
     
     @_("expr DB_LESS_THAN_EQUAL expr end")
     def stmt(self, p):
-        return ("set-bitwise-shl", p.expr0, p.expr1)
+        return ("set_bitwise_shl", p.expr0, p.expr1)
     
     @_("expr DB_GREATER_THAN_EQUAL expr end")
     def stmt(self, p):
-        return ("set-bitwise-shr", p.expr0, p.expr1)
+        return ("set_bitwise_shr", p.expr0, p.expr1)
     
     @_("SELF_EQUAL expr end")
     def stmt(self, p):
-        return ("set-self", p.expr)
+        return ("set_self", p.expr)
     
     @_("expr TO expr end")
     def stmt(self, p):
-        return ("set-cast", p.expr0, p.expr1)
+        return ("set_cast", p.expr0, p.expr1)
     
     @_("LBRACE expr RBRACE RARROW expr end")
     def stmt(self, p):
-        return ("list-remove", p.expr0, p.expr1)
+        return ("list_remove", p.expr0, p.expr1)
     
     @_("LBRACE expr RBRACE LARROW expr end")
     def stmt(self, p):
-        return ("list-append", p.expr0, p.expr1)
+        return ("list_append", p.expr0, p.expr1)
     
     @_("ASSERT expr end")
     def stmt(self, p):
@@ -546,15 +547,15 @@ class ZinkParser(Parser):
     
     @_("USE ID AS ID end")
     def stmt(self, p):
-        return ("use-as", p.ID0, p.ID1)
+        return ("use_as", p.ID0, p.ID1)
     
     @_("USE ID FROM ID end")
     def stmt(self, p):
-        return ("use-from", p.ID0, p.ID1)
+        return ("use_from", p.ID0, p.ID1)
     
     @_("USE ID AS ID FROM ID end")
     def stmt(self, p):
-        return ("use-as-from", p.ID0, p.ID1, p.ID2)
+        return ("use_as_from", p.ID0, p.ID1, p.ID2)
     
     @_("WHILE expr end program DOT end")
     def stmt(self, p):
@@ -566,7 +567,7 @@ class ZinkParser(Parser):
     
     @_("FOR args AT expr IN expr end program DOT end")
     def stmt(self, p):
-        return ("for-at", p.args, p.expr0, p.expr1, p.program)
+        return ("for_at", p.args, p.expr0, p.expr1, p.program)
     
     @_("IF expr end program DOT end")
     def stmt(self, p):
@@ -574,15 +575,15 @@ class ZinkParser(Parser):
     
     @_("IF expr end program DOT ELSE end program DOT end")
     def stmt(self, p):
-        return ("if-else", p.expr, p.program0, p.program1)
+        return ("if_else", p.expr, p.program0, p.program1)
     
     @_("IF expr end program DOT if_elifs")
     def stmt(self, p):
-        return ("if-elif", p.expr, p.program, p.if_elifs)
+        return ("if_elif", p.expr, p.program, p.if_elifs)
     
     @_("IF expr end program DOT if_elifs ELSE end program DOT end")
     def stmt(self, p):
-        return ("if-elif-else", p.expr, p.program0, p.if_elifs, p.program1)
+        return ("if_elif_else", p.expr, p.program0, p.if_elifs, p.program1)
     
     @_("TRY end program DOT end")
     def stmt(self, p):
@@ -590,15 +591,15 @@ class ZinkParser(Parser):
     
     @_("TRY end program DOT try_catches")
     def stmt(self, p):
-        return ("try-catch", p.program, p.try_catches)
+        return ("try_catch", p.program, p.try_catches)
     
     @_("TRY end program DOT ELSE end program DOT end")
     def stmt(self, p):
-        return ("try-else", p.program0, p.program1)
+        return ("try_else", p.program0, p.program1)
     
     @_("TRY end program DOT try_catches ELSE end program DOT end")
     def stmt(self, p):
-        return ("try-catch-else", p.program0, p.try_catches, p.program1)
+        return ("try_catch_else", p.program0, p.try_catches, p.program1)
     
     @_("MATCH expr end program DOT end")
     def stmt(self, p):
@@ -626,27 +627,27 @@ class ZinkParser(Parser):
     
     @_("DEF ID end program DOT")
     def stmt(self, p):
-        return (f"func-def-untyped", p.ID, [], p.program)
+        return (f"func_def_untyped", p.ID, [], p.program)
     
     @_("DEF ID LPAREN fargs RPAREN end program DOT")
     def stmt(self, p):
-        return (f"func-def-untyped", p.ID, p.fargs, p.program)
+        return (f"func_def_untyped", p.ID, p.fargs, p.program)
     
     @_("DEF ID COLON type end program DOT")
     def stmt(self, p):
-        return (f"func-def", p.ID, [], p.type, p.program)
+        return (f"func_def", p.ID, [], p.type, p.program)
     
     @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
-        return (f"func-def", p.ID, p.fargs, p.type, p.program)
+        return (f"func_def", p.ID, p.fargs, p.type, p.program)
     
     @_("CLASS ID end program DOT")
     def stmt(self, p):
-        return ("class-def", p.ID, p.program)
+        return ("class_def", p.ID, p.program)
     
     @_("CLASS ID FROM ID end program DOT")
     def stmt(self, p):
-        return ("class-def-from", p.ID0, p.ID1, p.program)
+        return ("class_def_from", p.ID0, p.ID1, p.program)
     
     @_("WITH expr AS expr end program DOT")
     def stmt(self, p):
@@ -766,19 +767,19 @@ class ZinkParser(Parser):
     
     @_("LBRACK expr DB_ARROW expr RBRACK")
     def range(self, p):
-        return ("range-inc-inc", p.expr0, p.expr1, ("NUMBER", "1"))
+        return ("range_inc_inc", p.expr0, p.expr1, ("NUMBER", "1"))
     
     @_("LBRACK expr DB_ARROW expr RPAREN")
     def range(self, p):
-        return ("range-inc-exc", p.expr0, p.expr1, ("NUMBER", "1"))
+        return ("range_inc_exc", p.expr0, p.expr1, ("NUMBER", "1"))
     
     @_("LPAREN expr DB_ARROW expr RBRACK")
     def range(self, p):
-        return ("range-exc-inc", p.expr0, p.expr1, ("NUMBER", "1"))
+        return ("range_exc_inc", p.expr0, p.expr1, ("NUMBER", "1"))
     
     @_("LPAREN expr DB_ARROW expr RPAREN")
     def range(self, p):
-        return ("range-exc-exc", p.expr0, p.expr1, ("NUMBER", "1"))
+        return ("range_exc_exc", p.expr0, p.expr1, ("NUMBER", "1"))
     
     @_("LBRACE expr DB_ARROW expr RBRACE")
     def range(self, p):
@@ -814,7 +815,7 @@ class ZinkParser(Parser):
     
     @_("expr DB_SLASH expr")
     def expr(self, p):
-        return ("floor-divide", p.expr0, p.expr1)
+        return ("floor_divide", p.expr0, p.expr1)
     
     @_("expr MATMUL expr")
     def expr(self, p):
@@ -822,27 +823,27 @@ class ZinkParser(Parser):
     
     @_("expr AMPERSAND expr")
     def expr(self, p):
-        return ("bitwise-and", p.expr0, p.expr1)
+        return ("bitwise_and", p.expr0, p.expr1)
     
     @_("expr PIPE expr")
     def expr(self, p):
-        return ("bitwise-or", p.expr0, p.expr1)
+        return ("bitwise_or", p.expr0, p.expr1)
     
     @_("expr CARET expr")
     def expr(self, p):
-        return ("bitwise-xor", p.expr0, p.expr1)
+        return ("bitwise_xor", p.expr0, p.expr1)
     
     @_("TILDE expr")
     def expr(self, p):
-        return ("bitwise-not", p.expr)
+        return ("bitwise_not", p.expr)
     
     @_("expr DB_LESS_THAN expr")
     def expr(self, p):
-        return ("bitwise-shl", p.expr0, p.expr1)
+        return ("bitwise_shl", p.expr0, p.expr1)
     
     @_("expr DB_GREATER_THAN expr")
     def expr(self, p):
-        return ("bitwise-shr", p.expr0, p.expr1)
+        return ("bitwise_shr", p.expr0, p.expr1)
     
     @_("expr PERCENTAGE expr")
     def expr(self, p):
@@ -850,27 +851,27 @@ class ZinkParser(Parser):
     
     @_("expr DB_PLUS %prec INCREMENT")
     def expr(self, p):
-        return ("inc-after", p.expr)
+        return ("inc_after", p.expr)
     
     @_("expr DB_MINUS %prec DECREMENT")
     def expr(self, p):
-        return ("dec-after", p.expr)
+        return ("dec_after", p.expr)
     
     @_("DB_PLUS expr %prec INCREMENT")
     def expr(self, p):
-        return ("inc-before", p.expr)
+        return ("inc_before", p.expr)
     
     @_("DB_MINUS expr %prec DECREMENT")
     def expr(self, p):
-        return ("dec-before", p.expr)
+        return ("dec_before", p.expr)
     
     @_("MINUS expr %prec UNARY_MINUS")
     def expr(self, p):
-        return ("unary-minus", p.expr)
+        return ("unary_minus", p.expr)
     
     @_("PLUS expr %prec UNARY_PLUS")
     def expr(self, p):
-        return ("unary-plus", p.expr)
+        return ("unary_plus", p.expr)
     
     @_("expr IS expr %prec SAME")
     def expr(self, p):
@@ -882,27 +883,27 @@ class ZinkParser(Parser):
     
     @_("expr CMP_E expr")
     def expr(self, p):
-        return ("cmp-e", p.expr0, p.expr1)
+        return ("cmp_e", p.expr0, p.expr1)
     
     @_("expr CMP_LE expr")
     def expr(self, p):
-        return ("cmp-le", p.expr0, p.expr1)
+        return ("cmp_le", p.expr0, p.expr1)
     
     @_("expr CMP_GE expr")
     def expr(self, p):
-        return ("cmp-ge", p.expr0, p.expr1)
+        return ("cmp_ge", p.expr0, p.expr1)
     
     @_("expr CMP_L expr")
     def expr(self, p):
-        return ("cmp-l", p.expr0, p.expr1)
+        return ("cmp_l", p.expr0, p.expr1)
     
     @_("expr CMP_G expr")
     def expr(self, p):
-        return ("cmp-g", p.expr0, p.expr1)
+        return ("cmp_g", p.expr0, p.expr1)
     
     @_("expr CMP_NE expr")
     def expr(self, p):
-        return ("cmp-ne", p.expr0, p.expr1)
+        return ("cmp_ne", p.expr0, p.expr1)
     
     @_("expr AND expr")
     def expr(self, p):
@@ -942,31 +943,31 @@ class ZinkParser(Parser):
     
     @_("expr LBRACK expr COLON RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-from", p.expr0, p.expr1)
+        return ("index_from", p.expr0, p.expr1)
     
     @_("expr LBRACK COLON expr RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-to", p.expr0, p.expr1)
+        return ("index_to", p.expr0, p.expr1)
     
     @_("expr LBRACK expr COLON expr RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-from-to", p.expr0, p.expr1, p.expr2)
+        return ("index_from_to", p.expr0, p.expr1, p.expr2)
     
     @_("expr LBRACK COLON COLON expr RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-step", p.expr0, p.expr1)
+        return ("index_step", p.expr0, p.expr1)
     
     @_("expr LBRACK expr COLON COLON expr RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-from-step", p.expr0, p.expr1, p.expr2)
+        return ("index_from_step", p.expr0, p.expr1, p.expr2)
     
     @_("expr LBRACK COLON expr COLON expr RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-to-step", p.expr0, p.expr1, p.expr2)
+        return ("index_to_step", p.expr0, p.expr1, p.expr2)
     
     @_("expr LBRACK expr COLON expr COLON expr RBRACK %prec INDEX")
     def expr(self, p):
-        return ("index-from-to-step", p.expr0, p.expr1, p.expr2, p.expr3)
+        return ("index_from_to_step", p.expr0, p.expr1, p.expr2, p.expr3)
     
     @_("expr DOT expr %prec MEMBER")
     def expr(self, p):
@@ -974,11 +975,11 @@ class ZinkParser(Parser):
     
     @_("USMARROW expr %prec STRING_UPPER")
     def expr(self, p):
-        return ("string-upper", p.expr)
+        return ("string_upper", p.expr)
     
     @_("DSMARROW expr %prec STRING_LOWER")
     def expr(self, p):
-        return ("string-lower", p.expr)
+        return ("string_lower", p.expr)
     
     @_("HASHTAG expr %prec LENGTH")
     def expr(self, p):
@@ -986,7 +987,7 @@ class ZinkParser(Parser):
     
     @_("expr QUESTION %prec TYPE")
     def expr(self, p):
-        return ("get-type", p.expr)
+        return ("get_type", p.expr)
     
     @_("expr AS expr")
     def expr(self, p):
@@ -998,7 +999,7 @@ class ZinkParser(Parser):
     
     @_("LPAREN expr FOR args AT expr IN expr RPAREN %prec GENERATOR")
     def expr(self, p):
-        return ("generator-at", p.expr0, p.args, p.expr1, p.expr2)
+        return ("generator_at", p.expr0, p.args, p.expr1, p.expr2)
     
     @_("LPAREN expr IF expr ELSE expr RPAREN %prec TERNARY")
     def expr(self, p):
@@ -1018,7 +1019,7 @@ class ZinkParser(Parser):
     
     @_("SUPER_INIT")
     def expr(self, p):
-        return ("super-init",)
+        return ("super_init",)
     
     @_("LPAREN expr BETWEEN expr COMMA expr RPAREN")
     def expr(self, p):
@@ -1036,190 +1037,23 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("raw", p.RAWSTRING)
 
+print(end="\r          \r", flush=True)
+
 if __name__ == "__main__":
     lexer = ZinkLexer()
     parser = ZinkParser()
 
     lang = sys.argv[1]
 
+    try: translator: translators.T = getattr(translators, f"_{lang}")()
+    except AttributeError: print(f"Missing ruleset for language \"{lang}\""); exit(3)
+
     def strip_paren(s):
         return str(s).removeprefix("(").removesuffix(")")
-
-    def walk_tree(node, dollar: str = "", indent: int = 0):
-        td = dollar
-        nd = indent
-        es = " " * indent
-        def is_string(s: str) -> bool:
-            return s.startswith("\"") and s.endswith("\"")
-        def wt(node, dollar: str = None, indent: int = None):
-            return walk_tree(node, dollar if dollar else td, indent if indent else nd)
-        def jwt(nodes, sep: str, dollar: str = None, indent: int = None):
-            return sep.join(str(wt(node, dollar, indent)) for node in nodes)
-        def jfwt(nodes, func, sep: str, dollar: str = None, indent: int = None):
-            return jwt(filter(func, nodes), sep, dollar, indent)
-        def unesc(s: str) -> str:
-            return eval(f"\"{s}\"")
-
-        if lang == "py":
-            if node     == None:        return None
-            elif node[0]== None:        return None
-
-            elif node[0]== "program":
-                out = []
-                for stmt in node[1]:
-                    if (walked := wt(stmt)) != None: out.append(es + walked)
-                return out
-            
-            elif node[0]== "raw":       return node[1]
-
-            elif node[0]== "var":       return node[1] if node[1] != "$" else dollar
-            elif node[0]== "NUMBER":    return str(node[1])
-            elif node[0]== "STRING":    return f"\"{node[1]}\""
-            elif node[0]== "BSTRING":   return f"b\"{node[1]}\""
-            elif node[0]== "RSTRING":   return f"r'{node[1]}'"
-            elif node[0]== "RAWSTRING": return node[1]
-            elif node[0]== "TRUE":      return "True"
-            elif node[0]== "FALSE":     return "False"
-            elif node[0]== "NONE":      return "None"
-
-            elif node[0]== "ellipsis":                                              return f"..."
-            elif node[0]== "super-init":                                            return f"super().__init__"
-
-            elif node[0]== "output":                                                return f"print({wt(node[1])})"
-
-            elif node[0]== "pass":                                                  return f"pass"
-            elif node[0]== "continue":                                              return f"continue"
-            elif node[0]== "break":                                                 return f"break"
-            elif node[0]== "global":                                                return f"global {wt(node[1])}"
-
-            elif node[0]== "assert":                                                return f"assert {wt(node[1])}"
-            elif node[0]== "raise":                                                 return f"raise {wt(node[1])}"
-
-            elif node[0]== "func":                                                  return f"{wt(node[1])}({jwt(node[2], ", ")})"
-
-            elif node[0]== "tuple":                                                 return f"({", ".join(wt(arg) for arg in node[1])}{"," if len(node[1]) == 1 else ""})"
-            elif node[0]== "list":                                                  return f"[{", ".join(wt(arg) for arg in node[1])}]"
-            elif node[0]== "dict":                                                  return "{"+(", ".join(f"{wt(k)}: {wt(v)}" for k, v in node[1]))+"}"
-
-            elif node[0]== "type":                                                  return node[1]
-            elif node[0]== "type-expr":                                             return wt(node[1])
-            elif node[0]== "typelist":                                              return f"{wt(node[1])}[{", ".join(str(wt(arg)) for arg in node[2])}]"
-            elif node[0]== "typesel":                                               return f"({wt(node[1])} | {wt(node[2])})"
-            elif node[0]== "arg":                                                   return f"*{node[1]}"
-            elif node[0]== "kwarg":                                                 return f"**{node[1]}"
-            elif node[0]== "typed-arg":                                             return f"{node[1]}: {wt(node[2])}"
-            elif node[0]== "default-arg":                                           return f"{node[1]} = {wt(node[2])}"
-            elif node[0]== "default-typed-arg":                                     return f"{node[1]}: {wt(node[2])} = {wt(node[3])}"
-
-            if node[0]  == "set":                   td = jwt(node[1], ", ");        return f"{td} = {jwt(node[2], ", ")}"
-            elif node[0]== "set-add":               td = wt(node[1]);               return f"{td} += {wt(node[2])}"
-            elif node[0]== "set-subtract":          td = wt(node[1]);               return f"{td} -= {wt(node[2])}"
-            elif node[0]== "set-multiply":          td = wt(node[1]);               return f"{td} *= {wt(node[2])}"
-            elif node[0]== "set-divide":            td = wt(node[1]);               return f"{td} /= {wt(node[2])}"
-            elif node[0]== "set-dot":               td = wt(node[1]);               return f"{td} = {td}.{wt(node[2])}"
-            elif node[0]== "set-power":             td = wt(node[1]);               return f"{td} **= {wt(node[2])}"
-            elif node[0]== "set-floor-divide":      td = wt(node[1]);               return f"{td} //= {wt(node[2])}"
-            elif node[0]== "set-modulo":            td = wt(node[1]);               return f"{td} %= {wt(node[2])}"
-            elif node[0]== "set-matmul":            td = wt(node[1]);               return f"{td} @= {wt(node[2])}"
-            elif node[0]== "set-bitwise-and":       td = wt(node[1]);               return f"{td} &= {wt(node[2])}"
-            elif node[0]== "set-bitwise-or":        td = wt(node[1]);               return f"{td} |= {wt(node[2])}"
-            elif node[0]== "set-bitwise-xor":       td = wt(node[1]);               return f"{td} ^= {wt(node[2])}"
-            elif node[0]== "set-bitwise-not":       td = wt(node[1]);               return f"{td} = ~{td}"
-            elif node[0]== "set-bitwise-shl":       td = wt(node[1]);               return f"{td} <<= {wt(node[2])}"
-            elif node[0]== "set-bitwise-shr":       td = wt(node[1]);               return f"{td} >>= {wt(node[2])}"
-            elif node[0]== "set-self":                                              return f"self.{(_ := wt(node[1]))} = {_}"
-            elif node[0]== "set-cast":              td = wt(node[1]);               return f"{td} = type({wt(node[2])}())({td})"
-            elif node[0]== "add":                                                   return f"({wt(node[1])} + {wt(node[2])})"
-            elif node[0]== "subtract":                                              return f"({wt(node[1])} - {wt(node[2])})"
-            elif node[0]== "multiply":                                              return f"({wt(node[1])} * {wt(node[2])})"
-            elif node[0]== "divide":                                                return f"({wt(node[1])} / {wt(node[2])})"
-            elif node[0]== "unary-plus":                                            return f"(+{wt(node[1])})"
-            elif node[0]== "unary-minus":                                           return f"(-{wt(node[1])})"
-            elif node[0]== "walrus":                td = wt(node[1]);               return f"({wt(node[1])} := {wt(node[2])})"
-            elif node[0]== "power":                                                 return f"({wt(node[1])} ** {wt(node[2])})"
-            elif node[0]== "floor-divide":                                          return f"({wt(node[1])} // {wt(node[2])})"
-            elif node[0]== "modulo":                                                return f"({wt(node[1])} % {wt(node[2])})"
-            elif node[0]== "matmul":                                                return f"({wt(node[1])} @ {wt(node[2])})"
-            elif node[0]== "bitwise-and":                                           return f"({wt(node[1])} & {wt(node[2])})"
-            elif node[0]== "bitwise-or":                                            return f"({wt(node[1])} | {wt(node[2])})"
-            elif node[0]== "bitwise-xor":                                           return f"({wt(node[1])} ^ {wt(node[2])})"
-            elif node[0]== "bitwise-not":                                           return f"(~{wt(node[1])})"
-            elif node[0]== "bitwise-shl":                                           return f"({wt(node[1])} << {wt(node[2])})"
-            elif node[0]== "bitwise-shr":                                           return f"({wt(node[1])} >> {wt(node[2])})"
-            elif node[0]== "cmp-e":                                                 return f"({wt(node[1])} == {wt(node[2])})"
-            elif node[0]== "cmp-g":                                                 return f"({wt(node[1])} > {wt(node[2])})"
-            elif node[0]== "cmp-l":                                                 return f"({wt(node[1])} < {wt(node[2])})"
-            elif node[0]== "cmp-le":                                                return f"({wt(node[1])} <= {wt(node[2])})"
-            elif node[0]== "cmp-ge":                                                return f"({wt(node[1])} >= {wt(node[2])})"
-            elif node[0]== "cmp-ne":                                                return f"({wt(node[1])} != {wt(node[2])})"
-            elif node[0]== "between":                                               return f"({wt(node[2])} <= {wt(node[1])} <= {wt(node[3])})"
-            elif node[0]== "index":                                                 return f"{wt(node[1])}[{wt(node[2])}]"
-            elif node[0]== "index-from":                                            return f"{wt(node[1])}[{wt(node[2])}:]"
-            elif node[0]== "index-to":                                              return f"{wt(node[1])}[:{wt(node[2])}]"
-            elif node[0]== "index-from-to":                                         return f"{wt(node[1])}[{wt(node[2])}:{wt(node[3])}]"
-            elif node[0]== "index-step":                                            return f"{wt(node[1])}[::{wt(node[2])}]"
-            elif node[0]== "index-from-step":                                       return f"{wt(node[1])}[{wt(node[2])}::{wt(node[3])}]"
-            elif node[0]== "index-to-step":                                         return f"{wt(node[1])}[:{wt(node[2])}:{wt(node[3])}]"
-            elif node[0]== "index-from-to-step":                                    return f"{wt(node[1])}[{wt(node[2])}:{wt(node[3])}:{wt(node[4])}]"
-            elif node[0]== "list-remove":                                           return f"{wt(node[2])} = {wt(node[1])}.pop()"
-            elif node[0]== "list-append":                                           return f"{wt(node[1])}.append({wt(node[2])})"
-            elif node[0]== "member":                                                return f"{wt(node[1])}.{wt(node[2])}"
-            elif node[0]== "string-upper":                                          return f"{wt(node[1])}.upper()"
-            elif node[0]== "string-lower":                                          return f"{wt(node[1])}.lower()"
-            elif node[0]== "range-inc-inc":                                         return f"range({wt(node[1])}, {wt(node[2])}+1, {wt(node[3])})"
-            elif node[0]== "range-inc-exc":                                         return f"range({wt(node[1])}, {wt(node[2])}, {wt(node[3])})"
-            elif node[0]== "range-exc-inc":                                         return f"range({wt(node[1])}+1, {wt(node[2])}+1, {wt(node[3])})"
-            elif node[0]== "range-exc-exc":                                         return f"range({wt(node[1])}+1, {wt(node[2])}, {wt(node[3])})"
-            elif node[0]== "range":                                                 return f"range({wt(node[1])}, {wt(node[2])}, {wt(node[3])})"
-            elif node[0]== "length":                                                return f"len({wt(node[1])})"
-            elif node[0]== "get-type":                                              return f"type({wt(node[1])})"
-            elif node[0]== "cast":                                                  return f"type({wt(node[2])}())({wt(node[1])})"
-            elif node[0]== "use":                                                   return f"import {node[1]}"
-            elif node[0]== "use-as":                                                return f"import {node[1]} as {node[2]}"
-            elif node[0]== "use-from":                                              return f"from {node[2]} import {node[1]}"
-            elif node[0]== "use-as-from":                                           return f"from {node[3]} import {node[1]} as {node[2]}"
-            elif node[0]== "while":                 nd += 4;                        return f"while {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "for":                   nd += 4;                        return f"for {", ".join(wt(arg) for arg in node[1])} in {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "for-at":                nd += 4;                        return f"for {wt(node[2])}, ({", ".join(wt(arg) for arg in node[1])}) in enumerate({wt(node[3])}):{"\n".join([""]+wt(node[4]))}"
-            elif node[0]== "if":                    nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "if-else":               nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "if-elif":               nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}{"\n".join([""]+list(es+f"elif {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[3]))}"
-            elif node[0]== "if-elif-else":          nd += 4;                        return f"if {wt(node[1])}:{"\n".join([""]+wt(node[2]))}{"\n".join([""]+list(es+f"elif {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[3]))}\n{es}else:{"\n".join([""]+wt(node[4]))}"
-            elif node[0]== "generator":             td = wt(node[1]);               return f"({td} for {", ".join(wt(arg) for arg in node[2])} in {(wt(node[3]))})"
-            elif node[0]== "generator-at":          td = f"({jwt(node[2], ", ")})"; return f"({wt(node[1])} for {wt(node[3])}, {td} in enumerate({wt(node[4])}))"
-            elif node[0]== "ternary":                                               return f"({wt(node[1])} if {wt(node[2])} else {wt(node[3])})"
-            elif node[0]== "try":                   nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass"
-            elif node[0]== "try-else":              nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}\n{es}except:\n{" "*nd}pass\n{es}else:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "try-catch":             nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}"
-            elif node[0]== "try-catch-else":        nd += 4;                        return f"try:{"\n".join([""]+wt(node[1]))}{"\n".join([""]+list(es+f"except {wt(cond)}:{"\n".join([""]+wt(prog))}" for cond, prog in node[2]))}\n{es}else:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "match":                 nd += 4;                        return f"match {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "case":                  nd += 4;                        return f"case {wt(node[1])}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "inc-before":                                            return f"({(tmp := wt(node[1]))} := {tmp}+1)"
-            elif node[0]== "dec-before":                                            return f"({(tmp := wt(node[1]))} := {tmp}-1)"
-            elif node[0]== "inc-after":                                             return f"(({(tmp := wt(node[1]))} := {tmp}+1)-1)"
-            elif node[0]== "dec-after":                                             return f"(({(tmp := wt(node[1]))} := {tmp}-1)+1)"
-            elif node[0]== "func-def":              nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}) -> {wt(node[3])}:{"\n".join([""]+([f"{" " * nd}super().__init__({", ".join(f"{(wt(arg)+":").split(":")[0]}={(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-super", node[2]))})"] if len(list(filter(lambda _: _[0] == "func-assign-super", node[2]))) > 0 else [])+[f"{" " * nd}self.{(wt(arg)+":").split(":")[0]} = {(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-self", node[2])]+wt(node[4]))}"
-            elif node[0]== "func-def-untyped":      nd += 4;                        return f"def {node[1]}({", ".join(wt(arg) for arg in node[2])}):{"\n".join([""]+([f"{" " * nd}super().__init__({", ".join(f"{(wt(arg)+":").split(":")[0]}={(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-super", node[2]))})"] if len(list(filter(lambda _: _[0] == "func-assign-super", node[2]))) > 0 else [])+[f"{" " * nd}self.{(wt(arg)+":").split(":")[0]} = {(wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func-assign-self", node[2])]+wt(node[3]))}"
-            elif node[0]== "func-assign-self":                                      return wt(node[1])
-            elif node[0]== "func-assign-super":                                     return wt(node[1])
-            elif node[0]== "class-def":             nd += 4;                        return f"class {node[1]}:{"\n".join([""]+wt(node[2]))}"
-            elif node[0]== "class-def-from":        nd += 4;                        return f"class {node[1]}({node[2]}):{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "with":                  nd += 4;                        return f"with {wt(node[1])} as {wt(node[2])}:{"\n".join([""]+wt(node[3]))}"
-            elif node[0]== "return":                                                return f"return {wt(node[1])}"
-            elif node[0]== "del":                                                   return f"del {wt(node[1])}"
-            elif node[0]== "and":                                                   return f"({wt(node[1])} and {wt(node[2])})"
-            elif node[0]== "or":                                                    return f"({wt(node[1])} or {wt(node[2])})"
-            elif node[0]== "not":                                                   return f"(not {wt(node[1])})"
-            elif node[0]== "is":                                                    return f"({wt(node[1])} is {wt(node[2])})"
-            elif node[0]== "has":                                                   return f"({wt(node[2])} in {wt(node[1])})"
-            elif node[0]== "lambda":                                                return f"(lambda {jwt(node[2], ", ")}: {wt(node[1])})"
-            elif node[0]== "decorator":                                             return f"@{wt(node[1])}"
-            elif node[0]== "self":                                                  return f"self"
-            elif node[0]== "super":                                                 return f"super()"
-
+    
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))
-        return None if parsed == None else walk_tree(parsed)
+        return None if parsed == None else translator(parsed, "None", 0)
 
     rung  = {
         "__name__": "__main__",
@@ -1229,8 +1063,6 @@ if __name__ == "__main__":
         "__doc__": None,
         "__builtins__": __builtins__
     }
-    
-    print(end="\r          \r", flush=True)
 
     if len(sys.argv) == 3:
         with open((file := sys.argv[2]) + ".z", "r") as f:
@@ -1257,19 +1089,16 @@ if __name__ == "__main__":
                     print(f"\b\b\b\b--> {out}/{file}.py")
                 else:
                     print(f"ERR")
-                    exit(1)
+                    exit(2)
     else:
         try:
             while True:
                 globals = {}
                 cmd = input("> ")
                 if cmd.lower() == "exit": exit()
-                tokens = lexer.tokenize(cmd+"\n\n")
-                parsed = parser.parse(tokens)
-                print(parsed)
+                parsed = parse(cmd+"\n\n")
                 if parsed != None:
-                    conv = walk_tree(parsed)
-                    print("\n".join(conv))
-                    exec("\n".join(conv), rung)
+                    print("\n".join(parsed))
+                    exec("\n".join(parsed), rung)
         except KeyboardInterrupt:
             print()
