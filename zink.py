@@ -279,7 +279,7 @@ class ZinkParser(Parser):
     
     @_("NONE")
     def type(self, p):
-        return ("type", None)
+        return ("type", "None")
     
     @_("types COMMA type")
     def types(self, p):
