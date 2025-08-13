@@ -5,8 +5,9 @@ import translators
 print(end="zink: ... ", flush=True)
 
 class FilteredLogger(object):
-    def __init__(self, f):
+    def __init__(self, f, exit: bool = True):
         self.f = f
+        self.exit = exit
 
     def debug(self, msg, *args, **kwargs):
         self.f.write((msg % args) + '\n')
@@ -18,8 +19,8 @@ class FilteredLogger(object):
         if "defined, but not used" in tolog: return
         if "unused tokens" in tolog: return
         self.f.write("WARNING: " + tolog + "\n")
-        if "shift/reduce conflict" in tolog: exit(1)
-        if "reduce/reduce conflict" in tolog: exit(1)
+        if self.exit and "shift/reduce conflict" in tolog: exit(1)
+        if self.exit and "reduce/reduce conflict" in tolog: exit(1)
 
     def error(self, msg, *args, **kwargs):
         self.f.write("ERROR: " + (msg % args) + "\n")
@@ -223,8 +224,9 @@ class ZinkLexer(Lexer):
         return column
 
 class ZinkParser(Parser):
-    #debugfile = "parser.txt"
-    log = FilteredLogger(sys.stderr)
+    debug = False
+    debugfile = "parser.txt" if debug else None
+    log = FilteredLogger(sys.stderr, exit=not debug)
 
     def error(self, token):
         sys.stderr.write("\b\b\b\b[!] ")

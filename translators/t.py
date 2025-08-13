@@ -23,12 +23,17 @@ class T:
         print(f"Language \"{self.name}\" doesn't support \"{ntype}\"")
         exit(1)
     
+    def empty_body(s):
+        return []
+    
     def wt(self, node, dollar: str = None, indent: int = None):
         return type(self)()(node, dollar if dollar else self.dollar, indent if indent else self.indent)
     def jwt(self, nodes, sep: str, dollar: str = None, indent: int = None):
         return sep.join(str(self.wt(node, dollar, indent)) for node in nodes)
     def jfwt(self, nodes, func, sep: str, dollar: str = None, indent: int = None):
         return self.jwt(filter(func, nodes), sep, dollar, indent)
+    def body(self, content: list[str]):
+        return "\n"+"\n".join(content if len(content) > 0 else self.empty_body())
     
     def _program(s):
         out = []

@@ -2,6 +2,7 @@ from translators import T as Template
 
 class T(Template):
     def __init__(self): super().__init__("Python")
+
     def _RAWSTRING(s):                                                      return s.n[1]
     def _NUMBER(s):                                                         return str(s.n[1])
     def _STRING(s):                                                         return f"\"{s.n[1]}\""
@@ -99,33 +100,33 @@ class T(Template):
     def _use_as(s):                                                         return f"import {s.n[1]} as {s.n[2]}"
     def _use_from(s):                                                       return f"from {s.n[2]} import {s.n[1]}"
     def _use_as_from(s):                                                    return f"from {s.n[3]} import {s.n[1]} as {s.n[2]}"
-    def _while(s):                  s.indent += 4;                          return f"while {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}"
-    def _for(s):                    s.indent += 4;                          return f"for {", ".join(s.wt(arg) for arg in s.n[1])} in {s.wt(s.n[2])}:{"\n".join([""]+s.wt(s.n[3]))}"
-    def _for_at(s):                 s.indent += 4;                          return f"for {s.wt(s.n[2])}, ({", ".join(s.wt(arg) for arg in s.n[1])}) in enumerate({s.wt(s.n[3])}):{"\n".join([""]+s.wt(s.n[4]))}"
-    def _if(s):                     s.indent += 4;                          return f"if {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}"
-    def _if_else(s):                s.indent += 4;                          return f"if {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}\n{" "*s.indent}else:{"\n".join([""]+s.wt(s.n[3]))}"
-    def _if_elif(s):                s.indent += 4;                          return f"if {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}{"\n".join([""]+list((" "*s.indent)+f"elif {s.wt(cond)}:{"\n".join([""]+s.wt(prog))}" for cond, prog in s.n[3]))}"
-    def _if_elif_else(s):           s.indent += 4;                          return f"if {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}{"\n".join([""]+list((" "*s.indent)+f"elif {s.wt(cond)}:{"\n".join([""]+s.wt(prog))}" for cond, prog in s.n[3]))}\n{" "*s.indent}else:{"\n".join([""]+s.wt(s.n[4]))}"
+    def _while(s):                  s.indent += 4;                          return f"while {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
+    def _for(s):                    s.indent += 4;                          return f"for {", ".join(s.wt(arg) for arg in s.n[1])} in {s.wt(s.n[2])}:{s.body(s.wt(s.n[3]))}"
+    def _for_at(s):                 s.indent += 4;                          return f"for {s.wt(s.n[2])}, ({", ".join(s.wt(arg) for arg in s.n[1])}) in enumerate({s.wt(s.n[3])}):{s.body(s.wt(s.n[4]))}"
+    def _if(s):                     s.indent += 4;                          return f"if {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
+    def _if_else(s):                s.indent += 4;                          return f"if {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[3]))}"
+    def _if_elif(s):                s.indent += 4;                          return f"if {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}{s.body(list((" "*(s.indent-4))+f"elif {s.wt(cond)}:{s.body(s.wt(prog))}" for cond, prog in s.n[3]))}"
+    def _if_elif_else(s):           s.indent += 4;                          return f"if {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}{s.body(list((" "*(s.indent-4))+f"elif {s.wt(cond)}:{s.body(s.wt(prog))}" for cond, prog in s.n[3]))}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[4]))}"
     def _generator(s):              s.dollar = s.wt(s.n[1]);                return f"({s.dollar} for {", ".join(s.wt(arg) for arg in s.n[2])} in {(s.wt(s.n[3]))})"
     def _generator_at(s):           s.dollar = f"({s.jwt(s.n[2], ", ")})";  return f"({s.wt(s.n[1])} for {s.wt(s.n[3])}, {s.dollar} in enumerate({s.wt(s.n[4])}))"
     def _ternary(s):                                                        return f"({s.wt(s.n[1])} if {s.wt(s.n[2])} else {s.wt(s.n[3])})"
-    def _try(s):                    s.indent += 4;                          return f"try:{"\n".join([""]+s.wt(s.n[1]))}\n{" "*s.indent}except:\n{" "*s.indent}pass"
-    def _try_else(s):               s.indent += 4;                          return f"try:{"\n".join([""]+s.wt(s.n[1]))}\n{" "*s.indent}except:\n{" "*s.indent}pass\n{" "*s.indent}else:{"\n".join([""]+s.wt(s.n[2]))}"
-    def _try_catch(s):              s.indent += 4;                          return f"try:{"\n".join([""]+s.wt(s.n[1]))}{"\n".join([""]+list((" "*s.indent)+f"except {s.wt(cond)}:{"\n".join([""]+s.wt(prog))}" for cond, prog in s.n[2]))}"
-    def _try_catch_else(s):         s.indent += 4;                          return f"try:{"\n".join([""]+s.wt(s.n[1]))}{"\n".join([""]+list((" "*s.indent)+f"except {s.wt(cond)}:{"\n".join([""]+s.wt(prog))}" for cond, prog in s.n[2]))}\n{" "*s.indent}else:{"\n".join([""]+s.wt(s.n[3]))}"
-    def _match(s):                  s.indent += 4;                          return f"match {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}"
-    def _case(s):                   s.indent += 4;                          return f"case {s.wt(s.n[1])}:{"\n".join([""]+s.wt(s.n[2]))}"
+    def _try(s):                    s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}\n{" "*(s.indent-4)}except:\n{" "*(s.indent-4)}pass"
+    def _try_else(s):               s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}\n{" "*(s.indent-4)}except:\n{" "*(s.indent-4)}pass\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[2]))}"
+    def _try_catch(s):              s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}{s.body(list((" "*s.indent)+f"except {s.wt(cond)}:{s.body(s.wt(prog))}" for cond, prog in s.n[2]))}"
+    def _try_catch_else(s):         s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}{s.body(list((" "*s.indent)+f"except {s.wt(cond)}:{s.body(s.wt(prog))}" for cond, prog in s.n[2]))}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[3]))}"
+    def _match(s):                  s.indent += 4;                          return f"match {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
+    def _case(s):                   s.indent += 4;                          return f"case {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
     def _inc_before(s):                                                     return f"({(tmp := s.wt(s.n[1]))} := {tmp}+1)"
     def _dec_before(s):                                                     return f"({(tmp := s.wt(s.n[1]))} := {tmp}-1)"
     def _inc_after(s):                                                      return f"(({(tmp := s.wt(s.n[1]))} := {tmp}+1)-1)"
     def _dec_after(s):                                                      return f"(({(tmp := s.wt(s.n[1]))} := {tmp}-1)+1)"
-    def _func_def(s):               s.indent += 4;                          return f"def {s.n[1]}({", ".join(s.wt(arg) for arg in s.n[2])}) -> {s.wt(s.n[3])}:{"\n".join([""]+([f"{" " * s.indent}super().__init__({", ".join(f"{(s.wt(arg)+":").split(":")[0]}={(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_super", s.n[2]))})"] if len(list(filter(lambda _: _[0] == "func_assign_super", s.n[2]))) > 0 else [])+[f"{" " * s.indent}self.{(s.wt(arg)+":").split(":")[0]} = {(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_self", s.n[2])]+s.wt(s.n[4]))}"
-    def _func_def_untyped(s):       s.indent += 4;                          return f"def {s.n[1]}({", ".join(s.wt(arg) for arg in s.n[2])}):{"\n".join([""]+([f"{" " * s.indent}super().__init__({", ".join(f"{(s.wt(arg)+":").split(":")[0]}={(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_super", s.n[2]))})"] if len(list(filter(lambda _: _[0] == "func_assign_super", s.n[2]))) > 0 else [])+[f"{" " * s.indent}self.{(s.wt(arg)+":").split(":")[0]} = {(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_self", s.n[2])]+s.wt(s.n[3]))}"
+    def _func_def(s):               s.indent += 4;                          return f"def {s.n[1]}({", ".join(s.wt(arg) for arg in s.n[2])}) -> {s.wt(s.n[3])}:{s.body(([f"{" " * s.indent}super().__init__({", ".join(f"{(s.wt(arg)+":").split(":")[0]}={(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_super", s.n[2]))})"] if len(list(filter(lambda _: _[0] == "func_assign_super", s.n[2]))) > 0 else [])+[f"{" " * s.indent}self.{(s.wt(arg)+":").split(":")[0]} = {(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_self", s.n[2])]+s.wt(s.n[4]))}"
+    def _func_def_untyped(s):       s.indent += 4;                          return f"def {s.n[1]}({", ".join(s.wt(arg) for arg in s.n[2])}):{s.body(([f"{" " * s.indent}super().__init__({", ".join(f"{(s.wt(arg)+":").split(":")[0]}={(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_super", s.n[2]))})"] if len(list(filter(lambda _: _[0] == "func_assign_super", s.n[2]))) > 0 else [])+[f"{" " * s.indent}self.{(s.wt(arg)+":").split(":")[0]} = {(s.wt(arg)+":").split(":")[0]}" for arg in filter(lambda _: _[0] == "func_assign_self", s.n[2])]+s.wt(s.n[3]))}"
     def _func_assign_self(s):                                               return s.wt(s.n[1])
     def _func_assign_super(s):                                              return s.wt(s.n[1])
-    def _class_def(s):              s.indent += 4;                          return f"class {s.n[1]}:{"\n".join([""]+s.wt(s.n[2]))}"
-    def _class_def_from(s):         s.indent += 4;                          return f"class {s.n[1]}({s.n[2]}):{"\n".join([""]+s.wt(s.n[3]))}"
-    def _with(s):                   s.indent += 4;                          return f"with {s.wt(s.n[1])} as {s.wt(s.n[2])}:{"\n".join([""]+s.wt(s.n[3]))}"
+    def _class_def(s):              s.indent += 4;                          return f"class {s.n[1]}:{s.body(s.wt(s.n[2]))}"
+    def _class_def_from(s):         s.indent += 4;                          return f"class {s.n[1]}({s.n[2]}):{s.body(s.wt(s.n[3]))}"
+    def _with(s):                   s.indent += 4;                          return f"with {s.wt(s.n[1])} as {s.wt(s.n[2])}:{s.body(s.wt(s.n[3]))}"
     def _return(s):                                                         return f"return {s.wt(s.n[1])}"
     def _del(s):                                                            return f"del {s.wt(s.n[1])}"
     def _and(s):                                                            return f"({s.wt(s.n[1])} and {s.wt(s.n[2])})"
@@ -137,3 +138,6 @@ class T(Template):
     def _decorator(s):                                                      return f"@{s.wt(s.n[1])}"
     def _self(s):                                                           return f"self"
     def _super(s):                                                          return f"super()"
+
+    def empty_body(s):
+        return [" "*s.indent+s._pass()]
