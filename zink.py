@@ -255,7 +255,7 @@ class ZinkParser(Parser):
         ("left", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL", "AMPERSAND", "PIPE", "CARET", "DB_LESS_THAN", "DB_GREATER_THAN", "COLON_EQUAL"),
         ("right", "UNARY_PLUS", "UNARY_MINUS", "STRING_UPPER", "STRING_LOWER", "LENGTH", "TYPE", "TILDE"),
         ("left", "INCREMENT", "DECREMENT"),
-        ("left", "AS"),
+        ("left", "AS", "LIKE"),
         ("left", "MEMBER", "DOT", "LPAREN", "EXCLAMATION"),
     )
 
