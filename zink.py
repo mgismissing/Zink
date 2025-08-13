@@ -38,7 +38,7 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE",
         "PASS", "CONTINUE", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
@@ -173,6 +173,7 @@ class ZinkLexer(Lexer):
     ID["use"]               = "USE"
     ID["from"]              = "FROM"
     ID["as"]                = "AS"
+    ID["like"]              = "LIKE"
     ID["at"]                = "AT"
     ID["in"]                = "IN"
     ID["to"]                = "TO"
@@ -994,6 +995,10 @@ class ZinkParser(Parser):
     @_("expr AS expr")
     def expr(self, p):
         return ("cast", p.expr0, p.expr1)
+    
+    @_("expr LIKE expr")
+    def expr(self, p):
+        return ("cast-type", p.expr0, p.expr1)
     
     @_("LPAREN expr FOR args IN expr RPAREN %prec GENERATOR")
     def expr(self, p):
