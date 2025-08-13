@@ -998,7 +998,7 @@ class ZinkParser(Parser):
     
     @_("expr LIKE expr")
     def expr(self, p):
-        return ("cast-type", p.expr0, p.expr1)
+        return ("cast_type", p.expr0, p.expr1)
     
     @_("LPAREN expr FOR args IN expr RPAREN %prec GENERATOR")
     def expr(self, p):
