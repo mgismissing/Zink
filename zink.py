@@ -1020,7 +1020,7 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("ellipsis",)
     
-    @_("expr LARROW LPAREN args RPAREN")
+    @_("LPAREN expr RPAREN LARROW LPAREN args RPAREN")
     def expr(self, p):
         return ("lambda", p.expr, p.args)
     
