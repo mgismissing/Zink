@@ -3,7 +3,6 @@ from translators import T as Template
 class T(Template):
     def __init__(self): super().__init__("Python")
 
-    def _RAWSTRING(s):                                                      return s.n[1]
     def _NUMBER(s):                                                         return str(s.n[1])
     def _STRING(s):                                                         return f"\"{s.n[1]}\""
     def _BSTRING(s):                                                        return f"b\"{s.n[1]}\""

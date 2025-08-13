@@ -35,6 +35,9 @@ class T:
     def body(self, content: list[str]):
         return "\n"+"\n".join(content if len(content) > 0 else self.empty_body())
     
+    def _RAWSTRING(s):
+        return s.n[1]
+    
     def _program(s):
         out = []
         for stmt in s.n[1]:
