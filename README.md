@@ -102,7 +102,7 @@ Here's a comparison between Zink and Python:
 |`range(2, 5)`                   |`{2<->5}`                       |
 |`try: ... except: pass`         |`try ...`                       |
 |`try: ... except: ...`          |`try ... catch ...`             |
-|`x <= a <= y`                   |`a between x, y`                |
+|`x <= a <= y`                   |`(a between x, y)`              |
 
 ## Language support
-Zink is also built with the idea of writing the same code while still converting it to a lot of languages, like for example writing the source code in Zink and then converting it to both Python and Ruby. The `bin` folder here contains the main file `zink` (that requires the language we're trying to convert to as the first parameter) and a bunch of "helper" files like `zpy` which is exactly the same as calling `zink py`.
+Zink is also built with the idea of writing the same code while still converting it to many languages, like for example writing the source code in Zink and then converting it to both Python and Ruby. The `bin` folder here contains the main file `zink` (that requires the language we're trying to convert to as the first parameter) and a bunch of "helper" files like `zpy` which is exactly the same as calling `zink py`.
