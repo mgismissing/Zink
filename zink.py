@@ -19,8 +19,7 @@ class FilteredLogger(object):
         if "defined, but not used" in tolog: return
         if "unused tokens" in tolog: return
         self.f.write("WARNING: " + tolog + "\n")
-        if self.exit and "shift/reduce conflict" in tolog: exit(1)
-        if self.exit and "reduce/reduce conflict" in tolog: exit(1)
+        if self.exit and "conflict" in tolog: exit(1)
 
     def error(self, msg, *args, **kwargs):
         self.f.write("ERROR: " + (msg % args) + "\n")
@@ -42,7 +41,7 @@ class ZinkLexer(Lexer):
         "PASS", "CONTINUE", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
-        "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW",
+        "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
         "DB_ARROW", "DB_DARROW", "DB_SMARROW",
         "DOLLAR", "HASHTAG", "ELLIPSIS", "OUTPUT",
         "SUPER_INIT",
@@ -85,8 +84,6 @@ class ZinkLexer(Lexer):
     DB_PLUS                 = r"\+\+"
     DB_MINUS                = r"--"
 
-    OUTPUT                  = r":::"
-
     SELF_EQUAL              = r"@<-"
     SUPER_INIT              = r"@\^"
 
@@ -101,6 +98,8 @@ class ZinkLexer(Lexer):
     RSMARROW                = r"→"
     USMARROW                = r"↑"
     DSMARROW                = r"↓"
+    LBARROW                 = r"<\|"
+    RBARROW                 = r"\|>"
 
     DOLLAR                  = r"\$"
     HASHTAG                 = r"#"
@@ -673,7 +672,7 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("del", p.expr)
     
-    @_("OUTPUT expr end")
+    @_("LBARROW expr end")
     def stmt(self, p):
         return ("output", p.expr)
     
