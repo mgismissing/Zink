@@ -5,7 +5,11 @@ import sys
 lexer = ZinkLexer()
 parser = ZinkParser()
 
-lang = sys.argv[1]
+if len(sys.argv) == 1:
+    lang = "py"
+    print(f"WARNING: Language not specified, defaulting to \"{lang}\"")
+else:
+    lang = sys.argv[1]
 
 try: translator: translators.T = getattr(translators, f"_{lang}")()
 except AttributeError: print(f"Missing ruleset for language \"{lang}\""); exit(3)
