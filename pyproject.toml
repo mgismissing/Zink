@@ -1,12 +1,12 @@
 [project]
 name = "zlang"
-version = "0.0.5"
+version = "1.0.3"
 description = "Lightweight and expressive programming language similar to Python"
 authors = [
     {name = "magnesium", email = "datas3gment@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "sly (>=0.5,<0.6)"
 ]
@@ -14,6 +14,8 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "zlang", from = "src"}]
 
+[tool.poetry.scripts]
+z = "zlang.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
