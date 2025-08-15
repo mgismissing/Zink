@@ -249,7 +249,7 @@ class ZinkParser(Parser):
         ("nonassoc", "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "PERCENTAGE_EQUAL", "AMPERSAND_EQUAL", "MATMUL_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL"),
         ("right", "NOT"),
         ("left", "AND", "OR"),
-        ("nonassoc", "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE", "SAME", "CONTAINS"),
+        ("nonassoc", "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE", "SAME", "IN"),
         ("left", "INDEX"),
         ("left", "PLUS", "MINUS"),
         ("left", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL", "AMPERSAND", "PIPE", "CARET", "DB_LESS_THAN", "DB_GREATER_THAN", "COLON_EQUAL"),
@@ -566,11 +566,11 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("while", p.expr, p.program)
     
-    @_("FOR args IN expr end program DOT end")
+    @_("FOR args RARROW expr end program DOT end")
     def stmt(self, p):
         return ("for", p.args, p.expr, p.program)
     
-    @_("FOR args AT expr IN expr end program DOT end")
+    @_("FOR args AT expr RARROW expr end program DOT end")
     def stmt(self, p):
         return ("for_at", p.args, p.expr0, p.expr1, p.program)
     
@@ -892,9 +892,9 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("is", p.expr0, p.expr1)
     
-    @_("expr HAS expr %prec CONTAINS")
+    @_("expr IN expr")
     def expr(self, p):
-        return ("has", p.expr0, p.expr1)
+        return ("in", p.expr0, p.expr1)
     
     @_("expr CMP_E expr")
     def expr(self, p):
@@ -1012,11 +1012,11 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("cast_type", p.expr0, p.expr1)
     
-    @_("LPAREN expr FOR args IN expr RPAREN %prec GENERATOR")
+    @_("LPAREN expr FOR args RARROW expr RPAREN %prec GENERATOR")
     def expr(self, p):
         return ("generator", p.expr0, p.args, p.expr1)
     
-    @_("LPAREN expr FOR args AT expr IN expr RPAREN %prec GENERATOR")
+    @_("LPAREN expr FOR args AT expr RARROW expr RPAREN %prec GENERATOR")
     def expr(self, p):
         return ("generator_at", p.expr0, p.args, p.expr1, p.expr2)
     
