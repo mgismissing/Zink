@@ -1,4 +1,4 @@
-from translators import T as Template
+from .t import T as Template
 
 class T(Template):
     def __init__(self): super().__init__("Python")
