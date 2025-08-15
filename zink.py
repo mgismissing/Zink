@@ -416,7 +416,8 @@ class ZinkParser(Parser):
     def kwargs(self, p):
         return [p.kwarg]
     
-    @_("ELIF expr end program DOT")
+    @_("ELIF expr end program DOT",
+       "ELIF expr end program DOT end")
     def if_elif(self, p):
         return (p.expr, p.program)
     
@@ -428,7 +429,8 @@ class ZinkParser(Parser):
     def if_elifs(self, p):
         return [p.if_elif]
     
-    @_("CATCH expr end program DOT")
+    @_("CATCH expr end program DOT",
+       "CATCH expr end program DOT end")
     def try_catch(self, p):
         return (p.expr, p.program)
     
@@ -576,15 +578,18 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("if", p.expr, p.program)
     
-    @_("IF expr end program DOT ELSE end program DOT end")
+    @_("IF expr end program DOT ELSE end program DOT end",
+       "IF expr end program DOT end ELSE end program DOT end")
     def stmt(self, p):
         return ("if_else", p.expr, p.program0, p.program1)
     
-    @_("IF expr end program DOT if_elifs")
+    @_("IF expr end program DOT if_elifs",
+       "IF expr end program DOT end if_elifs")
     def stmt(self, p):
         return ("if_elif", p.expr, p.program, p.if_elifs)
     
-    @_("IF expr end program DOT if_elifs ELSE end program DOT end")
+    @_("IF expr end program DOT if_elifs ELSE end program DOT end",
+       "IF expr end program DOT end if_elifs ELSE end program DOT end")
     def stmt(self, p):
         return ("if_elif_else", p.expr, p.program0, p.if_elifs, p.program1)
     
@@ -592,15 +597,18 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("try", p.program)
     
-    @_("TRY end program DOT try_catches")
+    @_("TRY end program DOT try_catches",
+       "TRY end program DOT end try_catches")
     def stmt(self, p):
         return ("try_catch", p.program, p.try_catches)
     
-    @_("TRY end program DOT ELSE end program DOT end")
+    @_("TRY end program DOT ELSE end program DOT end",
+       "TRY end program DOT end ELSE end program DOT end")
     def stmt(self, p):
         return ("try_else", p.program0, p.program1)
     
-    @_("TRY end program DOT try_catches ELSE end program DOT end")
+    @_("TRY end program DOT try_catches ELSE end program DOT end",
+       "TRY end program DOT end try_catches ELSE end program DOT end")
     def stmt(self, p):
         return ("try_catch_else", p.program0, p.try_catches, p.program1)
     
