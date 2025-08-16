@@ -230,6 +230,10 @@ class ZinkParser(Parser):
     debugfile = "parser.txt" if debug else None
     log = FilteredLogger(sys.stderr, exit=not debug)
 
+    def __init__(self, ignore_obsolete: bool = False):
+        super().__init__()
+        self.ignore_obsolete = ignore_obsolete
+
     def error(self, token):
         sys.stderr.write("\b\b\b\b[!] ")
         if token:
@@ -242,7 +246,8 @@ class ZinkParser(Parser):
             sys.stderr.write("Unexpected EOF\n")
         exit(1)
 
-    def warn_func_def(s, p) -> None:
+    def warn_func_def(self, p) -> None:
+        if self.ignore_obsolete: return
         pID = p.ID if hasattr(p, "ID") else ""
         pMATMUL = p.MATMUL if hasattr(p, "MATMUL") else ""
         pfargs = p.fargs if hasattr(p, "fargs") else []
