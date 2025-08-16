@@ -1,19 +1,40 @@
 from .zink import ZinkLexer, ZinkParser
 from . import translators
-import sys
+from argparse import ArgumentParser
+
+def parse_args():
+    parser = ArgumentParser(prog="zink")
+    parser.add_argument(
+        "-l", "--lang", "--language",
+        default="py",
+        help="language to translate to (default: py)"
+    )
+    parser.add_argument(
+        "file",
+        metavar="file",
+        nargs="?",
+        help="Zink source file to translate"
+    )
+    parser.add_argument(
+        "output",
+        metavar="output",
+        nargs="?",
+        help="output file"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="enable verbose output"
+    )
+    return parser.parse_args()
 
 def main():
+    args = parse_args()
     lexer = ZinkLexer()
     parser = ZinkParser()
 
-    if len(sys.argv) == 1:
-        lang = "py"
-        print(f"WARNING: Language not specified, defaulting to \"{lang}\"")
-    else:
-        lang = sys.argv[1]
-
-    try: translator: translators.T = getattr(translators, f"_{lang}")()
-    except AttributeError: print(f"Missing ruleset for language \"{lang}\""); exit(3)
+    try: translator: translators.T = getattr(translators, f"_{args.lang}")()
+    except AttributeError: print(f"Missing ruleset for language \"{args.lang}\""); exit(3)
 
     def strip_paren(s):
         return str(s).removeprefix("(").removesuffix(")")
@@ -31,32 +52,26 @@ def main():
         "__builtins__": __builtins__
     }
 
-    if len(sys.argv) == 3:
-        with open((file := sys.argv[2]) + ".z", "r") as f:
+    if args.file:
+        with open(args.file, "r") as f:
+            if args.verbose: print(end=f"zink: {args.file.ljust(16)} ... ", flush=True)
             read = f.read()
             if not read.endswith("\n"): read += "\n"
             parsed = parse(read)
             #print(parsed)
             if parsed != None:
                 out = "\n".join(parsed)
-                rung["__file__"] = file
-                exec(out, rung)
-    elif len(sys.argv) > 4:
-        src = sys.argv[-2]
-        out = sys.argv[-1]
-        for file in sys.argv[2:-2]:
-            with open(f"{src}/{file}.z", "r") as f:
-                print(end=f"zink: {f"{src}/{file}.z".ljust(16)} ... ", flush=True)
-                read = f.read()
-                if not read.endswith("\n"): read += "\n"
-                parsed = parse(read)
-                if parsed != None:
-                    with open(f"{out}/{file}.py", "w") as fout:
+                if args.output:
+                    with open(args.output, "w") as fout:
                         fout.write("\n".join(parsed))
-                    print(f"\b\b\b\b--> {out}/{file}.py")
+                    if args.verbose: print(f"\b\b\b\b--> {args.output}.py")
                 else:
-                    print(f"ERR")
-                    exit(2)
+                    if args.verbose: print(f"\b\b\b\b--> Done!")
+                    rung["__file__"] = args.file
+                    exec(out, rung)
+            else:
+                print("Parse error")
+                exit(2)
     else:
         try:
             while True:
@@ -65,7 +80,7 @@ def main():
                 if cmd.lower() == "exit": exit()
                 parsed = parse(cmd+"\n\n")
                 if parsed != None:
-                    print("\n".join(parsed))
+                    if args.verbose: print("\n".join(parsed))
                     exec("\n".join(parsed), rung)
         except KeyboardInterrupt:
             print()
