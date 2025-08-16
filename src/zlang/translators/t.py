@@ -6,7 +6,7 @@ class T:
         self.n      = None
         self.dollar = None
         self.indent = None
-    def __call__(self, node: tuple[str, ...], dollar: str, indent: int):
+    def __call__(self, node: tuple[str, ...], dollar: str = "", indent: int = 0):
         self.n      = node
         self.dollar = dollar
         self.indent = indent
