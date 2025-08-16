@@ -42,7 +42,7 @@ class ZinkLexer(Lexer):
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
         "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
         "DB_ARROW", "DB_DARROW", "DB_SMARROW",
-        "DOLLAR", "HASHTAG", "ELLIPSIS", "OUTPUT",
+        "DOLLAR", "HASHTAG", "ELLIPSIS", "OUTPUT", "INIT", "NEW",
         "SUPER_INIT",
         "NEWLINE", "SPACE"
     }
@@ -198,6 +198,8 @@ class ZinkLexer(Lexer):
     ID["match"]             = "MATCH"
     ID["case"]              = "CASE"
     ID["ignore"]            = "IGNORE"
+    ID["init"]              = "INIT"
+    ID["new"]               = "NEW"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -239,6 +241,10 @@ class ZinkParser(Parser):
         else:
             sys.stderr.write("Unexpected EOF\n")
         exit(1)
+    
+    def warn_dunder(s, id: str) -> None:
+        if not id.startswith("__") and id.endswith("__"): return
+        print(f"WARNING: \"def {id}(@, ...)\" will obsolesce in zlang 2.0.0; consider replacing with \"/{id[2:-2]} ...\". Read the documentation for more info.")
 
     tokens = ZinkLexer.tokens
 
@@ -641,19 +647,63 @@ class ZinkParser(Parser):
     
     @_("DEF ID end program DOT")
     def stmt(self, p):
-        return (f"func_def_untyped", p.ID, [], p.program)
+        self.warn_dunder(p.ID)
+        return ("func_def_untyped", p.ID, [], p.program)
     
     @_("DEF ID LPAREN fargs RPAREN end program DOT")
     def stmt(self, p):
-        return (f"func_def_untyped", p.ID, p.fargs, p.program)
+        self.warn_dunder(p.ID)
+        return ("func_def_untyped", p.ID, p.fargs, p.program)
     
     @_("DEF ID COLON type end program DOT")
     def stmt(self, p):
-        return (f"func_def", p.ID, [], p.type, p.program)
+        self.warn_dunder(p.ID)
+        return ("func_def", p.ID, [], p.type, p.program)
     
     @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
-        return (f"func_def", p.ID, p.fargs, p.type, p.program)
+        self.warn_dunder(p.ID)
+        return ("func_def", p.ID, p.fargs, p.type, p.program)
+    
+    @_("SLASH ID fargs end program DOT")
+    def stmt(self, p):
+        return ("func_def__", p.ID, p.fargs, p.program)
+    
+    @_("SLASH ID end program DOT")
+    def stmt(self, p):
+        return ("func_def__", p.ID, [], p.program)
+    
+    @_("SLASH INIT fargs end program DOT")
+    def stmt(self, p):
+        return ("func_def__init", p.fargs, p.program)
+    
+    @_("SLASH INIT end program DOT")
+    def stmt(self, p):
+        return ("func_def__init", [], p.program)
+    
+    @_("SLASH NEW fargs end program DOT")
+    def stmt(self, p):
+        return ("func_def__new", p.fargs, p.program)
+    
+    @_("SLASH NEW end program DOT")
+    def stmt(self, p):
+        return ("func_def__new", [], p.program)
+    
+    @_("SLASH DEL fargs end program DOT")
+    def stmt(self, p):
+        return ("func_def__del", p.fargs, p.program)
+    
+    @_("SLASH DEL end program DOT")
+    def stmt(self, p):
+        return ("func_def__del", [], p.program)
+    
+    @_("SLASH EXCLAMATION fargs end program DOT")
+    def stmt(self, p):
+        return ("func_def__call", p.fargs, p.program)
+    
+    @_("SLASH EXCLAMATION end program DOT")
+    def stmt(self, p):
+        return ("func_def__call", [], p.program)
     
     @_("CLASS ID end program DOT")
     def stmt(self, p):
