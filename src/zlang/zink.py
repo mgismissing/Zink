@@ -241,10 +241,16 @@ class ZinkParser(Parser):
         else:
             sys.stderr.write("Unexpected EOF\n")
         exit(1)
-    
-    def warn_dunder(s, id: str) -> None:
-        if not id.startswith("__") and id.endswith("__"): return
-        print(f"WARNING: \"def {id}(@, ...)\" will obsolesce in zlang 2.0.0; consider replacing with \"/{id[2:-2]} ...\". Read the documentation for more info.")
+
+    def warn_func_def(s, p) -> None:
+        pID = p.ID if hasattr(p, "ID") else ""
+        pMATMUL = p.MATMUL if hasattr(p, "MATMUL") else ""
+        pfargs = p.fargs if hasattr(p, "fargs") else []
+        if pID.startswith("__") and pID.endswith("__"):
+            if len(pfargs) >= 1 and pfargs[0] == ("self",):
+                print(f"WARNING: \"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info.")
+            else:
+                print(f"WARNING: \"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info.")
 
     tokens = ZinkLexer.tokens
 
@@ -645,25 +651,29 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("global", p.var)
     
-    @_("DEF ID end program DOT")
+    @_("DEF ID end program DOT",
+       "DEF MATMUL ID end program DOT")
     def stmt(self, p):
-        self.warn_dunder(p.ID)
-        return ("func_def_untyped", p.ID, [], p.program)
+        self.warn_func_def(p)
+        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, [], p.program)
     
-    @_("DEF ID LPAREN fargs RPAREN end program DOT")
+    @_("DEF ID LPAREN fargs RPAREN end program DOT",
+       "DEF MATMUL ID LPAREN fargs RPAREN end program DOT")
     def stmt(self, p):
-        self.warn_dunder(p.ID)
-        return ("func_def_untyped", p.ID, p.fargs, p.program)
+        self.warn_func_def(p)
+        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, p.fargs, p.program)
     
-    @_("DEF ID COLON type end program DOT")
+    @_("DEF ID COLON type end program DOT",
+       "DEF MATMUL ID COLON type end program DOT")
     def stmt(self, p):
-        self.warn_dunder(p.ID)
-        return ("func_def", p.ID, [], p.type, p.program)
+        self.warn_func_def(p)
+        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, [], p.type, p.program)
     
-    @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT")
+    @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF MATMUL ID LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
-        self.warn_dunder(p.ID)
-        return ("func_def", p.ID, p.fargs, p.type, p.program)
+        self.warn_func_def(p)
+        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, p.fargs, p.type, p.program)
     
     @_("SLASH ID fargs end program DOT")
     def stmt(self, p):
