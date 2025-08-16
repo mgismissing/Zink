@@ -5,21 +5,16 @@ from argparse import ArgumentParser
 def parse_args():
     parser = ArgumentParser(prog="zink")
     parser.add_argument(
-        "-l", "--lang", "--language",
+        "-l", "--lang",
+        metavar="lang",
         default="py",
         help="language to translate to (default: py)"
     )
     parser.add_argument(
-        "file",
-        metavar="file",
-        nargs="?",
-        help="Zink source file to translate"
-    )
-    parser.add_argument(
-        "output",
-        metavar="output",
-        nargs="?",
-        help="output file"
+        "files",
+        metavar=("file", "output"),
+        nargs="*",
+        help="Zink file(s) to translate and translated output file(s) pair"
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -30,6 +25,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    print(args)
     lexer = ZinkLexer()
     parser = ZinkParser()
 
@@ -52,32 +48,39 @@ def main():
         "__builtins__": __builtins__
     }
 
-    if args.file:
-        with open(args.file, "r") as f:
-            if args.verbose: print(end=f"zink: {args.file.ljust(16)} ... ", flush=True)
-            read = f.read()
-            if not read.endswith("\n"): read += "\n"
-            parsed = parse(read)
-            #print(parsed)
-            if parsed != None:
-                out = "\n".join(parsed)
-                if args.output:
-                    with open(args.output, "w") as fout:
-                        fout.write("\n".join(parsed))
-                    if args.verbose: print(f"\b\b\b\b--> {args.output}.py")
+    if args.files:
+        i = 0
+        while i < len(args.files):
+            file = args.files[i]
+            with open(file, "r") as f:
+                if args.verbose: print(end=f"zink: {file.ljust(16)} ... ", flush=True)
+                read = f.read()
+                if not read.endswith("\n"): read += "\n"
+                parsed = parse(read)
+                #print(parsed)
+                if parsed != None:
+                    out = "\n".join(parsed)
+                    if len(args.files) == 1:
+                        if args.verbose: print(f"\b\b\b\b--> Done!")
+                        rung["__file__"] = file
+                        exec(out, rung)
+                    elif len(args.files) % 2 == 0:
+                        with open(args.files[i+1], "w") as fout:
+                            fout.write("\n".join(parsed))
+                        if args.verbose: print(f"\b\b\b\b--> {args.files[i+1]}")
+                    else:
+                        print(f"\rUnspecified output file for \"{args.files[-1]}\"")
+                        exit(5)
                 else:
-                    if args.verbose: print(f"\b\b\b\b--> Done!")
-                    rung["__file__"] = args.file
-                    exec(out, rung)
-            else:
-                print("Parse error")
-                exit(2)
+                    print("Parse error")
+                    exit(2)
+                i += 2
     else:
         try:
             while True:
                 globals = {}
                 cmd = input("> ")
-                if cmd.lower() == "exit": exit()
+                if cmd.lower() == "exit": exit(0)
                 parsed = parse(cmd+"\n\n")
                 if parsed != None:
                     if args.verbose: print("\n".join(parsed))
