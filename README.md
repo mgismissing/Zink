@@ -83,26 +83,5 @@ You can start to notice that it simplifies many things that require a lot of tim
 
 Getting the length of an object is as easy as typing `#` before the object, and converting an object to a type is done with the repurposed keyword `as`.
 
-Here's a comparison between Zink and Python:
-
-| Python                         | Zink                           |
-|--------------------------------|--------------------------------|
-|`type(a)`                       |`a as type`                     |
-|`a.upper()`                     |`↑a`                            |
-|`a.lower()`                     |`↓a`                            |
-|`a()`                           |`a!`                            |
-|`print(a)`                      |`:::a`                          |
-|`self`                          |`@`                             |
-|`self.a = a`                    |`@<-a`                          |
-|`super()`                       |`^`                             |
-|`super().__init__`              |`@^`                            |
-|`a = a.b`                       |`a .= b`                        |
-|`for i, x in enumerate(a)`      |`for x at i in a`               |
-|`range(10)`                     |`{->10}`                        |
-|`range(2, 5)`                   |`{2<->5}`                       |
-|`try: ... except: pass`         |`try ...`                       |
-|`try: ... except: ...`          |`try ... catch ...`             |
-|`x <= a <= y`                   |`(a between x, y)`              |
-
 ## Language support
-Zink is also built with the idea of writing the same code while still converting it to many languages, like for example writing the source code in Zink and then converting it to both Python and Ruby. The `bin` folder here contains the main file `zink` (that requires the language we're trying to convert to as the first parameter) and a bunch of "helper" files like `zpy` which is exactly the same as calling `zink py`.
+Zink is also built with the idea of writing the same code while still converting it to many languages, like for example writing the source code in Zink and then converting it to both Python and Ruby.
