@@ -63,16 +63,14 @@ And look at those same classes in Zink:
 
 ```zink
 class Animal
-    def __init__(@, @name: str): None;;.
-
+    /init @name: str;;.
     def eat(@, food: str): None
         print(@.name, "is eating", food)
     .
 .
 
 class Bird from Animal
-    def __init__(@, ^name: str, @color: str)@: None;;.
-
+    /init ^name: str, @color: str;;.
     def fly(@): None
         print(@.color, @.name, "is flying")
     .
