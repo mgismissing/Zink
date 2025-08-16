@@ -226,18 +226,10 @@ def a(b)
 .
 ```
 
-Dunder methods (`__init__`, `__new__`, `__del__` and so on) can also be declared with this other syntax (`self` is implicit):
+Dunder methods (`__init__`, `__new__`, `__del__`, `__call__` and so on) can also be declared with this other syntax:
 
 ```zink
-/init a, b, c
-    ...
-.
-```
-
-One single exception is with `__call__`, which can also be declared like this:
-
-```zink
-/! a, b, c
+/@init a, b, c
     ...
 .
 ```
