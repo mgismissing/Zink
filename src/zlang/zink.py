@@ -37,13 +37,13 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES", "ASYNC",
         "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
-        "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
+        "LQARROW", "RQARROW", "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
         "DB_ARROW", "DB_DARROW", "DB_SMARROW",
-        "DOLLAR", "HASHTAG", "ELLIPSIS", "INIT", "NEW",
+        "DOLLAR", "HASHTAG", "ELLIPSIS", "NEW",
         "SUPER_INIT",
         "NEWLINE", "SPACE",
         "COMMENT"
@@ -92,7 +92,7 @@ class ZinkLexer(Lexer):
     SUPER_INIT              = r"@\^"
 
     LQARROW                 = r"<\?-"
-    LRARROW                 = r"-\?>"
+    RQARROW                 = r"-\?>"
     DB_ARROW                = r"<->"
     DB_DARROW               = r"<=>"
     LDARROW                 = r"<<-"
@@ -206,9 +206,8 @@ class ZinkLexer(Lexer):
     ID["match"]             = "MATCH"
     ID["case"]              = "CASE"
     ID["ignore"]            = "IGNORE"
-    ID["init"]              = "INIT"
-    ID["new"]               = "NEW"
     ID["times"]             = "TIMES"
+    ID["async"]             = "ASYNC"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -258,7 +257,8 @@ class ZinkParser(Parser):
     def warn_func_def(self, p) -> None:
         if self.ignore_obsolete: return
         pID = getattr(p, "ID", "")
-        pASYNC = getattr(p, "ASYNC", "") + " "
+        pASYNC = getattr(p, "ASYNC", "")
+        if pASYNC: pASYNC += " "
         pMATMUL = getattr(p, "MATMUL", "")
         pfargs = getattr(p, "fargs", [])
         if pID.startswith("__") and pID.endswith("__"):
@@ -266,8 +266,6 @@ class ZinkParser(Parser):
                 print_warn(f"\"def {pASYNC}{pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
             else:
                 print_warn(f"\"def {pASYNC}{pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
-        if pID == "__init__":
-            print_warn(f"def {pASYNC}{pMATMUL}__init__{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}{pMATMUL}*{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
 
     def warn_continue(self, p) -> None:
         if self.ignore_obsolete: return
@@ -722,13 +720,15 @@ class ZinkParser(Parser):
        "SLASH ASYNC ID end program DOT",
        "SLASH ASYNC ID fargs end program DOT")
     def stmt(self, p):
+        self.warn_func_def(p)
         return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}__", p.ID, getattr(p, "fargs", []), p.program)
     
-    @_("SLASH NEW end program DOT",
-       "SLASH NEW fargs end program DOT",
-       "SLASH ASYNC NEW end program DOT",
-       "SLASH ASYNC NEW fargs end program DOT")
+    @_("SLASH ASTERISK end program DOT",
+       "SLASH ASTERISK fargs end program DOT",
+       "SLASH ASYNC ASTERISK end program DOT",
+       "SLASH ASYNC ASTERISK fargs end program DOT")
     def stmt(self, p):
+        self.warn_func_def(p)
         return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}__init", getattr(p, "fargs", []), p.program)
     
     @_("CLASS ID end program DOT")
