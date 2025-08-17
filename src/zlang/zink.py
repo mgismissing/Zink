@@ -37,7 +37,7 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES", "ASYNC",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
         "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
@@ -207,7 +207,6 @@ class ZinkLexer(Lexer):
     ID["case"]              = "CASE"
     ID["ignore"]            = "IGNORE"
     ID["times"]             = "TIMES"
-    ID["async"]             = "ASYNC"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -253,23 +252,6 @@ class ZinkParser(Parser):
                 sys.stderr.write(_error(f"Token \"{token.type}\"\n"))
         else:
             sys.stderr.write(_error("Unexpected end of file\n"))
-
-    def warn_func_def(self, p) -> None:
-        if self.ignore_obsolete: return
-        pID = getattr(p, "ID", "")
-        pASYNC = getattr(p, "ASYNC", "")
-        if pASYNC: pASYNC += " "
-        pMATMUL = getattr(p, "MATMUL", "")
-        pfargs = getattr(p, "fargs", [])
-        if pID.startswith("__") and pID.endswith("__"):
-            if len(pfargs) >= 1 and pfargs[0] == ("self",):
-                print_warn(f"\"def {pASYNC}{pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
-            else:
-                print_warn(f"\"def {pASYNC}{pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
-
-    def warn_continue(self, p) -> None:
-        if self.ignore_obsolete: return
-        print_warn(f"\"continue\" will obsolesce in zlang 2.0.0; consider replacing with \"next\". Read the documentation for more info: https://zlang.readthedocs.io/")
 
     tokens = ZinkLexer.tokens
 
@@ -665,11 +647,6 @@ class ZinkParser(Parser):
     @_("PASS end")
     def stmt(self, p):
         return ("pass",)
-    
-    @_("CONTINUE end")
-    def stmt(self, p):
-        self.warn_continue(p)
-        return ("next",)
 
     @_("NEXT end")
     def stmt(self, p):
@@ -685,51 +662,53 @@ class ZinkParser(Parser):
     
     @_("DEF ID end program DOT",
        "DEF MATMUL ID end program DOT",
-       "DEF ASYNC ID end program DOT",
-       "DEF ASYNC MATMUL ID end program DOT")
-    def stmt(self, p):
-        self.warn_func_def(p)
-        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, [], p.program)
-    
-    @_("DEF ID LPAREN fargs RPAREN end program DOT",
+       "DEF QUESTION ID end program DOT",
+       "DEF QUESTION MATMUL ID end program DOT",
+       "DEF ID LPAREN fargs RPAREN end program DOT",
        "DEF MATMUL ID LPAREN fargs RPAREN end program DOT",
-       "DEF ASYNC ID LPAREN fargs RPAREN end program DOT",
-       "DEF ASYNC MATMUL ID LPAREN fargs RPAREN end program DOT")
-    def stmt(self, p):
-        self.warn_func_def(p)
-        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, p.fargs, p.program)
-    
-    @_("DEF ID COLON type end program DOT",
+       "DEF QUESTION ID LPAREN fargs RPAREN end program DOT",
+       "DEF QUESTION MATMUL ID LPAREN fargs RPAREN end program DOT",
+       "DEF ID COLON type end program DOT",
        "DEF MATMUL ID COLON type end program DOT",
-       "DEF ASYNC ID COLON type end program DOT",
-       "DEF ASYNC MATMUL ID COLON type end program DOT")
-    def stmt(self, p):
-        self.warn_func_def(p)
-        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, [], p.type, p.program)
-    
-    @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF QUESTION ID COLON type end program DOT",
+       "DEF QUESTION MATMUL ID COLON type end program DOT",
+       "DEF ID LPAREN fargs RPAREN COLON type end program DOT",
        "DEF MATMUL ID LPAREN fargs RPAREN COLON type end program DOT",
-       "DEF ASYNC ID LPAREN fargs RPAREN COLON type end program DOT",
-       "DEF ASYNC MATMUL ID LPAREN fargs RPAREN COLON type end program DOT")
+       "DEF QUESTION ID LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF QUESTION MATMUL ID LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
-        self.warn_func_def(p)
-        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, p.fargs, p.type, p.program)
+        if hasattr(p, "type"):
+            return (f"func_def{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, getattr(p, "fargs", []), p.type, p.program)
+        else:
+            return (f"func_def{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, getattr(p, "fargs", []), p.program)
     
     @_("SLASH ID end program DOT",
        "SLASH ID fargs end program DOT",
-       "SLASH ASYNC ID end program DOT",
-       "SLASH ASYNC ID fargs end program DOT")
-    def stmt(self, p):
-        self.warn_func_def(p)
-        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}__", p.ID, getattr(p, "fargs", []), p.program)
-    
-    @_("SLASH ASTERISK end program DOT",
+       "SLASH QUESTION ID end program DOT",
+       "SLASH QUESTION ID fargs end program DOT",
+       "SLASH ASTERISK end program DOT",
        "SLASH ASTERISK fargs end program DOT",
-       "SLASH ASYNC ASTERISK end program DOT",
-       "SLASH ASYNC ASTERISK fargs end program DOT")
+       "SLASH QUESTION ASTERISK end program DOT",
+       "SLASH QUESTION ASTERISK fargs end program DOT",
+       "SLASH PLUS end program DOT",
+       "SLASH PLUS fargs end program DOT",
+       "SLASH QUESTION PLUS end program DOT",
+       "SLASH QUESTION PLUS fargs end program DOT",
+       "SLASH MINUS end program DOT",
+       "SLASH MINUS fargs end program DOT",
+       "SLASH QUESTION MINUS end program DOT",
+       "SLASH QUESTION MINUS fargs end program DOT",
+       "SLASH EXCLAMATION end program DOT",
+       "SLASH EXCLAMATION fargs end program DOT",
+       "SLASH QUESTION EXCLAMATION end program DOT",
+       "SLASH QUESTION EXCLAMATION fargs end program DOT")
     def stmt(self, p):
-        self.warn_func_def(p)
-        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}__init", getattr(p, "fargs", []), p.program)
+        if hasattr(p, "ID"): func_type = p.ID
+        elif hasattr(p, "ASTERISK"): func_type = "init"
+        elif hasattr(p, "PLUS"): func_type = "enter"
+        elif hasattr(p, "MINUS"): func_type = "exit"
+        elif hasattr(p, "EXCLAMATION"): func_type = "call"
+        return (f"func_def{"_async" if hasattr(p, "QUESTION") else ""}__", func_type, getattr(p, "fargs", []), p.program)
     
     @_("CLASS ID end program DOT")
     def stmt(self, p):
