@@ -256,15 +256,17 @@ class ZinkParser(Parser):
 
     def warn_func_def(self, p) -> None:
         if self.ignore_obsolete: return
-        pID = p.ID if hasattr(p, "ID") else ""
-        pMATMUL = p.MATMUL if hasattr(p, "MATMUL") else ""
-        pfargs = p.fargs if hasattr(p, "fargs") else []
+        pID = getattr(p, "ID", "")
+        pMATMUL = getattr(p, "MATMUL", "")
+        pfargs = getattr(p, "fargs", [])
         if pID.startswith("__") and pID.endswith("__"):
             if len(pfargs) >= 1 and pfargs[0] == ("self",):
                 print_warn(f"\"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
             else:
                 print_warn(f"\"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
+
     def warn_continue(self, p) -> None:
+        if self.ignore_obsolete: return
         print_warn(f"\"continue\" will obsolesce in zlang 2.0.0; consider replacing with \"next\". Read the documentation for more info: https://zlang.readthedocs.io/")
 
     tokens = ZinkLexer.tokens
