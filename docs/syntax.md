@@ -73,7 +73,7 @@ These statements are made up of a keyword and can be followed by an expression. 
 | `use a from b`        | Imports `a` from the module named `b`.                                    |
 | `use a as b from c`   | Imports `a` as `c` from the module named `c`.                             |
 | `pass`                | Doesn't do anything.                                                      |
-| `continue`            | Skips to the next iteration in a loop.                                    |
+| `next`                | Skips to the next iteration in a loop.                                    |
 | `break`               | Exits out of the current loop.                                            |
 | `global a`            | Specifies that the global `a` should be used instead of the local one.    |
 | `<-`                  | Returns `None`.                                                           |

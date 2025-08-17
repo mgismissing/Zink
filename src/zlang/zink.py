@@ -38,7 +38,7 @@ class ZinkLexer(Lexer):
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
         "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE",
-        "PASS", "CONTINUE", "BREAK", "GLOBAL",
+        "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
         "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
@@ -184,6 +184,7 @@ class ZinkLexer(Lexer):
     ID["catch"]             = "CATCH"
     ID["pass"]              = "PASS"
     ID["continue"]          = "CONTINUE"
+    ID["next"]              = "NEXT"
     ID["global"]            = "GLOBAL"
     ID["break"]             = "BREAK"
     ID["True"]              = "TRUE"
@@ -260,9 +261,11 @@ class ZinkParser(Parser):
         pfargs = p.fargs if hasattr(p, "fargs") else []
         if pID.startswith("__") and pID.endswith("__"):
             if len(pfargs) >= 1 and pfargs[0] == ("self",):
-                print_warn(f"\"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info.")
+                print_warn(f"\"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
             else:
-                print_warn(f"\"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info.")
+                print_warn(f"\"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
+    def warn_continue(self, p) -> None:
+        print_warn(f"\"continue\" will obsolesce in zlang 2.0.0; consider replacing with \"next\". Read the documentation for more info: https://zlang.readthedocs.io/")
 
     tokens = ZinkLexer.tokens
 
@@ -657,7 +660,12 @@ class ZinkParser(Parser):
     
     @_("CONTINUE end")
     def stmt(self, p):
-        return ("continue",)
+        self.warn_continue(p)
+        return ("next",)
+
+    @_("NEXT end")
+    def stmt(self, p):
+        return ("next",)
     
     @_("BREAK end")
     def stmt(self, p):

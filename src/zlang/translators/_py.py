@@ -15,7 +15,7 @@ class T(Template):
     def _super_init(s):                                                     return f"super().__init__"
     def _output(s):                                                         return f"print({s.wt(s.n[1])})"
     def _pass(s):                                                           return f"pass"
-    def _continue(s):                                                       return f"continue"
+    def _next(s):                                                           return f"continue"
     def _break(s):                                                          return f"break"
     def _global(s):                                                         return f"global {s.wt(s.n[1])}"
     def _assert(s):                                                         return f"assert {s.wt(s.n[1])}"
