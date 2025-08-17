@@ -53,7 +53,7 @@ def main():
         parsed = parser.parse(lexer.tokenize(s))
         return None if parsed == None else translator(parsed, "None", 0)
 
-    rung  = {
+    rung = {
         "__name__": "__main__",
         "__file__": __file__,
         "__package__": None,
