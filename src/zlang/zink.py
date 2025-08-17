@@ -256,13 +256,16 @@ class ZinkParser(Parser):
     def warn_func_def(self, p) -> None:
         if self.ignore_obsolete: return
         pID = getattr(p, "ID", "")
+        pASYNC = getattr(p, "ASYNC", "") + " "
         pMATMUL = getattr(p, "MATMUL", "")
         pfargs = getattr(p, "fargs", [])
         if pID.startswith("__") and pID.endswith("__"):
             if len(pfargs) >= 1 and pfargs[0] == ("self",):
-                print_warn(f"\"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
+                print_warn(f"\"def {pASYNC}{pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
             else:
-                print_warn(f"\"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
+                print_warn(f"\"def {pASYNC}{pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
+        if pID == "__init__":
+            print_warn(f"def {pASYNC}{pMATMUL}__init__{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pASYNC}{pMATMUL}*{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info: https://zlang.readthedocs.io/")
 
     def warn_continue(self, p) -> None:
         if self.ignore_obsolete: return
@@ -681,68 +684,50 @@ class ZinkParser(Parser):
         return ("global", p.var)
     
     @_("DEF ID end program DOT",
-       "DEF MATMUL ID end program DOT")
+       "DEF MATMUL ID end program DOT",
+       "DEF ASYNC ID end program DOT",
+       "DEF ASYNC MATMUL ID end program DOT")
     def stmt(self, p):
         self.warn_func_def(p)
-        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, [], p.program)
+        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, [], p.program)
     
     @_("DEF ID LPAREN fargs RPAREN end program DOT",
-       "DEF MATMUL ID LPAREN fargs RPAREN end program DOT")
+       "DEF MATMUL ID LPAREN fargs RPAREN end program DOT",
+       "DEF ASYNC ID LPAREN fargs RPAREN end program DOT",
+       "DEF ASYNC MATMUL ID LPAREN fargs RPAREN end program DOT")
     def stmt(self, p):
         self.warn_func_def(p)
-        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, p.fargs, p.program)
+        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.ID, p.fargs, p.program)
     
     @_("DEF ID COLON type end program DOT",
-       "DEF MATMUL ID COLON type end program DOT")
+       "DEF MATMUL ID COLON type end program DOT",
+       "DEF ASYNC ID COLON type end program DOT",
+       "DEF ASYNC MATMUL ID COLON type end program DOT")
     def stmt(self, p):
         self.warn_func_def(p)
-        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, [], p.type, p.program)
+        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, [], p.type, p.program)
     
     @_("DEF ID LPAREN fargs RPAREN COLON type end program DOT",
-       "DEF MATMUL ID LPAREN fargs RPAREN COLON type end program DOT")
+       "DEF MATMUL ID LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF ASYNC ID LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF ASYNC MATMUL ID LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
         self.warn_func_def(p)
-        return (f"func_def{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, p.fargs, p.type, p.program)
+        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.ID, p.fargs, p.type, p.program)
     
-    @_("SLASH ID fargs end program DOT")
+    @_("SLASH ID end program DOT",
+       "SLASH ID fargs end program DOT",
+       "SLASH ASYNC ID end program DOT",
+       "SLASH ASYNC ID fargs end program DOT")
     def stmt(self, p):
-        return ("func_def__", p.ID, p.fargs, p.program)
+        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}__", p.ID, getattr(p, "fargs", []), p.program)
     
-    @_("SLASH ID end program DOT")
+    @_("SLASH NEW end program DOT",
+       "SLASH NEW fargs end program DOT",
+       "SLASH ASYNC NEW end program DOT",
+       "SLASH ASYNC NEW fargs end program DOT")
     def stmt(self, p):
-        return ("func_def__", p.ID, [], p.program)
-    
-    @_("SLASH INIT fargs end program DOT")
-    def stmt(self, p):
-        return ("func_def__init", p.fargs, p.program)
-    
-    @_("SLASH INIT end program DOT")
-    def stmt(self, p):
-        return ("func_def__init", [], p.program)
-    
-    @_("SLASH NEW fargs end program DOT")
-    def stmt(self, p):
-        return ("func_def__new", p.fargs, p.program)
-    
-    @_("SLASH NEW end program DOT")
-    def stmt(self, p):
-        return ("func_def__new", [], p.program)
-    
-    @_("SLASH DEL fargs end program DOT")
-    def stmt(self, p):
-        return ("func_def__del", p.fargs, p.program)
-    
-    @_("SLASH DEL end program DOT")
-    def stmt(self, p):
-        return ("func_def__del", [], p.program)
-    
-    @_("SLASH EXCLAMATION fargs end program DOT")
-    def stmt(self, p):
-        return ("func_def__call", p.fargs, p.program)
-    
-    @_("SLASH EXCLAMATION end program DOT")
-    def stmt(self, p):
-        return ("func_def__call", [], p.program)
+        return (f"func_def{"_async" if hasattr(p, "ASYNC") else ""}__init", getattr(p, "fargs", []), p.program)
     
     @_("CLASS ID end program DOT")
     def stmt(self, p):
