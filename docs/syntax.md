@@ -226,10 +226,26 @@ def a(b)
 .
 ```
 
-Dunder methods (`__init__`, `__new__`, `__del__`, `__call__` and so on) can also be declared with this other syntax:
+Functions can be asynchronous:
+
+```zink
+def async a(b)
+    ...
+.
+```
+
+Dunder methods (`__new__`, `__del__`, `__call__` and so on) can also be declared with this other syntax:
 
 ```zink
 /@init a, b, c
+    ...
+.
+```
+
+Except `__init__`, which instead is declared like this:
+
+```zink
+/@* a, b, c
     ...
 .
 ```
