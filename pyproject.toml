@@ -1,6 +1,6 @@
 [project]
 name = "zlang"
-version = "1.4.0"
+version = "1.5.0"
 description = "Lightweight and expressive programming language similar to Python"
 authors = [
     {name = "magnesium", email = "datas3gment@gmail.com"}

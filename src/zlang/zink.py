@@ -1,5 +1,6 @@
 import sys
 from sly import Lexer, Parser
+from .logger import print_info, print_warn, print_error, info as _info, warn as _warn, error as _error
 
 print(end="zink: ... ", flush=True)
 
@@ -9,7 +10,7 @@ class FilteredLogger(object):
         self.exit = exit
 
     def debug(self, msg, *args, **kwargs):
-        self.f.write((msg % args) + '\n')
+        self.f.write(_info((msg % args) + '\n'))
 
     info = debug
 
@@ -17,13 +18,13 @@ class FilteredLogger(object):
         tolog = (msg % args)
         if "defined, but not used" in tolog: return
         if "unused tokens" in tolog: return
-        self.f.write("WARNING: " + tolog + "\n")
+        self.f.write(_warn(tolog + "\n"))
         if self.exit and "conflict" in tolog: exit(1)
 
     def error(self, msg, *args, **kwargs):
-        self.f.write("ERROR: " + (msg % args) + "\n")
+        self.f.write(_error((msg % args) + "\n"))
 
-    critical = debug
+    critical = error
 
 class ZinkLexer(Lexer):
     tokens = {
@@ -241,15 +242,15 @@ class ZinkParser(Parser):
         self.include_empty_lines = include_empty_lines
 
     def error(self, token):
-        sys.stderr.write("\b\b\b\b[!] ")
+        sys.stderr.write("\b\b\b\b")
         if token:
             lineno = getattr(token, "lineno", 0)
             if lineno:
-                sys.stderr.write(f"Error at line {lineno} (token \"{token.type}\")\n")
+                sys.stderr.write(_error(f"Token \"{token.type}\" at line {lineno}\n"))
             else:
-                sys.stderr.write(f"Error (token \"{token.type}\")\n")
+                sys.stderr.write(_error(f"Token \"{token.type}\"\n"))
         else:
-            sys.stderr.write("Unexpected EOF\n")
+            sys.stderr.write(_error("Unexpected end of file\n"))
         exit(1)
 
     def warn_func_def(self, p) -> None:
@@ -259,9 +260,9 @@ class ZinkParser(Parser):
         pfargs = p.fargs if hasattr(p, "fargs") else []
         if pID.startswith("__") and pID.endswith("__"):
             if len(pfargs) >= 1 and pfargs[0] == ("self",):
-                print(f"WARNING: \"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info.")
+                print_warn(f"\"def {pMATMUL}{pID}(@{", ..." if len(pfargs) >= 2 else ""})\" will obsolesce in zlang 2.0.0; consider replacing with \"/@{pID[2:-2]}{" ..." if len(pfargs) >= 2 else ""}\". Read the documentation for more info.")
             else:
-                print(f"WARNING: \"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info.")
+                print_warn(f"\"def {pMATMUL}{pID}{"(...)" if len(pfargs) >= 1 else ""}\" will obsolesce in zlang 2.0.0; consider replacing with \"/{pMATMUL}{pID[2:-2]}{" ..." if len(pfargs) >= 1 else ""}\". Read the documentation for more info.")
 
     tokens = ZinkLexer.tokens
 

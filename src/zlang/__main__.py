@@ -1,5 +1,6 @@
 from .zink import ZinkLexer, ZinkParser
 from . import translators
+from .logger import print_info, print_warn, print_error
 from argparse import ArgumentParser
 
 def parse_args():
@@ -43,7 +44,7 @@ def main():
     )
 
     try: translator: translators.T = getattr(translators, f"_{args.lang}")()
-    except AttributeError: print(f"Missing ruleset for language \"{args.lang}\""); exit(3)
+    except AttributeError: print_error(f"Missing ruleset for language \"{args.lang}\""); exit(3)
 
     def strip_paren(s):
         return str(s).removeprefix("(").removesuffix(")")
@@ -82,10 +83,10 @@ def main():
                             fout.write("\n".join(parsed))
                         if args.verbose: print(f"\b\b\b\b--> {args.files[i+1]}")
                     else:
-                        print(f"\rUnspecified output file for \"{args.files[-1]}\"")
+                        print(end="\r"); print_error(f"Unspecified output file for \"{args.files[-1]}\"")
                         exit(5)
                 else:
-                    print("Parse error")
+                    print_error("Unknown parser error")
                     exit(2)
                 i += 2
     else:

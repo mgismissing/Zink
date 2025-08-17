@@ -1,4 +1,5 @@
 from types import MethodType, FunctionType
+from ..logger import print_info, print_warn, print_error
 
 class T:
     def __init__(self, name: str = None):
@@ -20,7 +21,7 @@ class T:
         except AttributeError:
             out = None
         if out != None: return out
-        print(f"Language \"{self.name}\" doesn't support \"{ntype}\"")
+        print_error(f"Language \"{self.name}\" doesn't support \"{ntype}\"")
         exit(1)
     
     def empty_body(s):
