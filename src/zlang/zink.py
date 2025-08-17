@@ -370,13 +370,8 @@ class ZinkParser(Parser):
     
     @_("fargs COMMA farg",
        "fargs COMMA MATMUL farg",
-       "fargs COMMA CARET farg")
-    def fargs(self, p):
-        if hasattr(p, "MATMUL"): return p.fargs + [("func_assign_self", p.farg)]
-        elif hasattr(p, "CARET"): return p.fargs + [("func_assign_super", p.farg)]
-        return p.fargs + [p.farg]
-    
-    @_("fargs COMMA NEWLINE farg",
+       "fargs COMMA CARET farg",
+       "fargs COMMA NEWLINE farg",
        "fargs COMMA NEWLINE MATMUL farg",
        "fargs COMMA NEWLINE CARET farg")
     def fargs(self, p):

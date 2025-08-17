@@ -54,6 +54,7 @@ def main():
         
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))
+        print(parsed)
         return None if parsed == None else translator(parsed, "None", 0)
 
     rung = {
@@ -74,7 +75,6 @@ def main():
                 read = f.read()
                 if not read.endswith("\n"): read += "\n"
                 parsed = parse(read)
-                #print(parsed)
                 if parsed != None:
                     out = "\n".join(parsed)
                     if len(args.files) == 1:
