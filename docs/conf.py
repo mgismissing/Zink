@@ -28,5 +28,8 @@ source_suffix = {
 
 html_theme = 'furo'
 html_static_path = ['_static']
-html_logo = '_logo.png'
 html_favicon = '_favicon.png'
+html_theme_options = {
+    "light_logo": "logo_light.png",
+    "dark_logo": "logo_dark.png"
+}
