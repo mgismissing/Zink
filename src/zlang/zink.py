@@ -50,9 +50,9 @@ class ZinkLexer(Lexer):
 
     ignore                  = " \t"
 
-    @_(r"=== .*?\n")
+    @_(r"=== .*\n")
     def COMMENT(self, t):
-        t.value = t.value[4:]
+        t.value = t.value[4:].strip("\n")
         return t
 
     @_(r'\\\n')
@@ -234,10 +234,11 @@ class ZinkParser(Parser):
     debugfile = "parser.txt" if debug else None
     log = FilteredLogger(sys.stderr, exit=not debug)
 
-    def __init__(self, ignore_obsolete: bool = False, include_comments: bool = False):
+    def __init__(self, ignore_obsolete: bool = False, include_comments: bool = False, include_empty_lines: bool = False):
         super().__init__()
         self.ignore_obsolete = ignore_obsolete
         self.include_comments = include_comments
+        self.include_empty_lines = include_empty_lines
 
     def error(self, token):
         sys.stderr.write("\b\b\b\b[!] ")
@@ -473,7 +474,7 @@ class ZinkParser(Parser):
     
     @_("end")
     def stmt(self, p):
-        return None
+        return ("EMPTY_LINE",) if self.include_empty_lines else None
     
     @_("expr end")
     def stmt(self, p):
