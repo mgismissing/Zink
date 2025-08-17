@@ -96,11 +96,11 @@ def main():
                 cmd = input("> ")
                 if cmd.lower() == "exit": exit(0)
                 try:
-                    parsed = parse(cmd+"\n\n")
+                    parsed = parse(cmd+"\n")
                 except LexError as e:
                     print_error(e)
                 else:
-                    if parsed != None:
+                    if parsed:
                         if args.verbose: print("\n".join(parsed))
                         try:
                             exec("\n".join(parsed), rung)

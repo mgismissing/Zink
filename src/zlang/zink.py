@@ -37,7 +37,7 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
         "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
@@ -206,6 +206,7 @@ class ZinkLexer(Lexer):
     ID["ignore"]            = "IGNORE"
     ID["init"]              = "INIT"
     ID["new"]               = "NEW"
+    ID["times"]             = "TIMES"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -243,15 +244,14 @@ class ZinkParser(Parser):
         self.include_empty_lines = include_empty_lines
 
     def error(self, token):
-        sys.stderr.write("\b\b\b\b")
         if token:
             lineno = getattr(token, "lineno", 0)
             if lineno:
-                sys.stderr.write(_error(f"Token \"{token.type}\" at line {lineno}"))
+                sys.stderr.write(_error(f"Token \"{token.type}\" at line {lineno}\n"))
             else:
-                sys.stderr.write(_error(f"Token \"{token.type}\""))
+                sys.stderr.write(_error(f"Token \"{token.type}\"\n"))
         else:
-            sys.stderr.write(_error("Unexpected end of file"))
+            sys.stderr.write(_error("Unexpected end of file\n"))
 
     def warn_func_def(self, p) -> None:
         if self.ignore_obsolete: return
@@ -604,6 +604,10 @@ class ZinkParser(Parser):
     @_("FOR args AT expr RARROW expr end program DOT end")
     def stmt(self, p):
         return ("for_at", p.args, p.expr0, p.expr1, p.program)
+    
+    @_("TIMES expr end program DOT end")
+    def stmt(self, p):
+        return ("times", p.expr, p.program)
     
     @_("IF expr end program DOT end")
     def stmt(self, p):
