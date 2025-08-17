@@ -54,7 +54,7 @@ def main():
         
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))
-        print(parsed)
+        #print(parsed)
         return None if parsed == None else translator(parsed, "None", 0)
 
     rung = {
