@@ -348,4 +348,18 @@ To eliminate unnecessary repetition of the same variable, the dollar `$` is used
 Finally, comments are defined like this:
 
 ```zink
-=== line comment, this comment will 
+=== this is a line comment!
+```
+
+Comments can also be inline:
+
+```zink
+<| === print 1 to the screen === 1
+```
+
+Multiline comments are still defined like line comments:
+
+```zink
+=== This is a multiline comment.
+=== It spans multiple lines.
+```
