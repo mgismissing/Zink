@@ -2,6 +2,7 @@ from .zink import ZinkLexer, ZinkParser
 from . import translators
 from .logger import print_info, print_warn, print_error
 from argparse import ArgumentParser
+from sly.lex import LexError
 
 def parse_args():
     parser = ArgumentParser(prog="zink")
@@ -92,13 +93,19 @@ def main():
     else:
         try:
             while True:
-                globals = {}
                 cmd = input("> ")
                 if cmd.lower() == "exit": exit(0)
-                parsed = parse(cmd+"\n\n")
-                if parsed != None:
-                    if args.verbose: print("\n".join(parsed))
-                    exec("\n".join(parsed), rung)
+                try:
+                    parsed = parse(cmd+"\n\n")
+                except LexError as e:
+                    print_error(e)
+                else:
+                    if parsed != None:
+                        if args.verbose: print("\n".join(parsed))
+                        try:
+                            exec("\n".join(parsed), rung)
+                        except Exception as e:
+                            print_error(f"Python {e.__class__.__name__}: {e}")
         except KeyboardInterrupt:
             print()
 

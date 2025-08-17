@@ -247,12 +247,11 @@ class ZinkParser(Parser):
         if token:
             lineno = getattr(token, "lineno", 0)
             if lineno:
-                sys.stderr.write(_error(f"Token \"{token.type}\" at line {lineno}\n"))
+                sys.stderr.write(_error(f"Token \"{token.type}\" at line {lineno}"))
             else:
-                sys.stderr.write(_error(f"Token \"{token.type}\"\n"))
+                sys.stderr.write(_error(f"Token \"{token.type}\""))
         else:
-            sys.stderr.write(_error("Unexpected end of file\n"))
-        exit(1)
+            sys.stderr.write(_error("Unexpected end of file"))
 
     def warn_func_def(self, p) -> None:
         if self.ignore_obsolete: return
