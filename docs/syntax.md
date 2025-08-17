@@ -299,6 +299,16 @@ with a as b
 .
 ```
 
+### Times
+
+`times a` is used as a shorthand for `for _ in range(a): del _; ...`:
+
+```zink
+times a
+    ...
+.
+```
+
 ## Lists, tuples and dictionaries
 
 ### Lists
