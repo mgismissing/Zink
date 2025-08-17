@@ -31,5 +31,6 @@ html_static_path = ['_static']
 html_favicon = '_favicon.png'
 html_theme_options = {
     "light_logo": "logo_light.png",
-    "dark_logo": "logo_dark.png"
+    "dark_logo": "logo_dark.png",
+    "sidebar_hide_name": True
 }
