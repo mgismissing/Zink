@@ -19,8 +19,8 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 source_suffix = {
-    ".rst": "restructuredtext",
-    ".md": "markdown"
+    '.rst': 'restructuredtext',
+    '.md': 'markdown'
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -28,4 +28,4 @@ source_suffix = {
 
 html_theme = 'furo'
 html_static_path = ['_static']
-html_logo = "zink.png"
+html_logo = 'zink.png'
