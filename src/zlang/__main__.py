@@ -22,6 +22,11 @@ def parse_args():
         help="enable verbose output"
     )
     parser.add_argument(
+        "-c", "--include-comments",
+        action="store_true",
+        help="keep comments in translated output"
+    )
+    parser.add_argument(
         "--ignore-obsolete",
         action="store_true",
         help="suppress obsolete warnings"
@@ -31,7 +36,7 @@ def parse_args():
 def main():
     args = parse_args()
     lexer = ZinkLexer()
-    parser = ZinkParser(ignore_obsolete=args.ignore_obsolete)
+    parser = ZinkParser(ignore_obsolete=args.ignore_obsolete, include_comments=args.include_comments)
 
     try: translator: translators.T = getattr(translators, f"_{args.lang}")()
     except AttributeError: print(f"Missing ruleset for language \"{args.lang}\""); exit(3)

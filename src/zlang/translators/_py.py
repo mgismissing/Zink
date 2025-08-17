@@ -10,6 +10,7 @@ class T(Template):
     def _TRUE(s):                                                           return "True"
     def _FALSE(s):                                                          return "False"
     def _NONE(s):                                                           return "None"
+    def _COMMENT(s):                                                        return f"# {s.n[1]}"
     def _ellipsis(s):                                                       return f"..."
     def _super_init(s):                                                     return f"super().__init__"
     def _output(s):                                                         return f"print({s.wt(s.n[1])})"

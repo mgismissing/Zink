@@ -341,7 +341,7 @@ To eliminate unnecessary repetition of the same variable, the dollar `$` is used
 | Dollar            | Equivalent        |
 |-------------------|-------------------|
 | `a += $`          | `a += a`          |
-| `($ for a in b)`  | `a for a in b`    |
+| `a = a[b]`        | `a = $[b]`        |
 
 ## Comments
 
@@ -349,12 +349,6 @@ Finally, comments are defined like this:
 
 ```zink
 === this is a line comment!
-```
-
-Comments can also be inline:
-
-```zink
-<| === print 1 to the screen === 1
 ```
 
 Multiline comments are still defined like line comments:

@@ -42,14 +42,18 @@ class ZinkLexer(Lexer):
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
         "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
         "DB_ARROW", "DB_DARROW", "DB_SMARROW",
-        "DOLLAR", "HASHTAG", "ELLIPSIS", "OUTPUT", "INIT", "NEW",
+        "DOLLAR", "HASHTAG", "ELLIPSIS", "INIT", "NEW",
         "SUPER_INIT",
-        "NEWLINE", "SPACE"
+        "NEWLINE", "SPACE",
+        "COMMENT"
     }
 
     ignore                  = " \t"
 
-    ignore_comment          = r"=== .*?( ===|\n)"
+    @_(r"=== .*?\n")
+    def COMMENT(self, t):
+        t.value = t.value[4:]
+        return t
 
     @_(r'\\\n')
     def LINE_CONTINUATION(self, t):
@@ -230,9 +234,10 @@ class ZinkParser(Parser):
     debugfile = "parser.txt" if debug else None
     log = FilteredLogger(sys.stderr, exit=not debug)
 
-    def __init__(self, ignore_obsolete: bool = False):
+    def __init__(self, ignore_obsolete: bool = False, include_comments: bool = False):
         super().__init__()
         self.ignore_obsolete = ignore_obsolete
+        self.include_comments = include_comments
 
     def error(self, token):
         sys.stderr.write("\b\b\b\b[!] ")
@@ -473,6 +478,10 @@ class ZinkParser(Parser):
     @_("expr end")
     def stmt(self, p):
         return p.expr
+    
+    @_("COMMENT")
+    def stmt(self, p):
+        return ("COMMENT", p.COMMENT) if self.include_comments else None
     
     @_("targs EQUAL args end")
     def stmt(self, p):
