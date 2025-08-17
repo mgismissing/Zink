@@ -221,7 +221,7 @@ match a
 Functions are defined like this:
 
 ```zink
-def a(b)
+def a(b: type): type
     ...
 .
 ```
@@ -234,21 +234,22 @@ def async a(b)
 .
 ```
 
-Dunder methods (`__new__`, `__del__`, `__call__` and so on) can also be declared with this other syntax:
+Dunder methods (`__add__`, `__sub__` and so on) can also be declared with this other syntax (`@` is implicit when declaring with `/`):
 
 ```zink
-/@init a, b, c
+/add a, b, c
     ...
 .
 ```
 
-Except `__init__`, which instead is declared like this:
+Except these, which instead have special names:
 
-```zink
-/@* a, b, c
-    ...
-.
-```
+| Symbol    | Dunder method |
+|-----------|---------------|
+| `*`       | `__init__`    |
+| `+`       | `__enter__`   |
+| `-`       | `__exit__`    |
+| `!`       | `__call__`    |
 
 To call a function:
 
@@ -258,10 +259,10 @@ a(b)
 
 ## Macros
 
-Macros are functions that don't need any argument.
+Macros are functions that don't need any argument. All function syntaxes are valid except the arguments, which are omitted:
 
 ```zink
-def a
+def a: type
     ...
 .
 ```
