@@ -217,9 +217,9 @@ class ZinkLexer(Lexer):
             t.value = int(t.value)
         return t
     
-    @_(r"\n+")
+    @_(r"\n")
     def NEWLINE(self, t):
-        self.lineno += len(t.value)
+        self.lineno += 1
         return t
     
     def find_column(text, token):

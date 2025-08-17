@@ -36,7 +36,7 @@ class T:
         return "\n"+"\n".join(content if len(content) > 0 else self.empty_body())
     
     def _EMPTY_LINE(s):
-        return "_EMPTY_LINE"
+        return ""
     def _RAWSTRING(s):
         return s.n[1]
     

@@ -345,7 +345,7 @@ To eliminate unnecessary repetition of the same variable, the dollar `$` is used
 
 ## Comments
 
-Finally, comments are defined like this:
+Finally, comments need to be at the start of a line and are defined like this:
 
 ```zink
 === this is a line comment!
