@@ -3,6 +3,7 @@ from . import translators
 from .logger import print_info, print_warn, print_error
 from argparse import ArgumentParser
 from sly.lex import LexError
+import colorama
 
 def parse_args():
     parser = ArgumentParser(prog="zink")
@@ -36,6 +37,7 @@ def parse_args():
     return parser.parse_args()
 
 def main():
+    colorama.init(autoreset=True)
     args = parse_args()
     lexer = ZinkLexer()
     parser = ZinkParser(
@@ -93,7 +95,7 @@ def main():
     else:
         try:
             while True:
-                cmd = input("> ")
+                cmd = input(colorama.Fore.LIGHTGREEN_EX+"> "+colorama.Fore.RESET)
                 if cmd.lower() == "exit": exit(0)
                 try:
                     parsed = parse(cmd+"\n")
