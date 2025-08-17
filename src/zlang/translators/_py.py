@@ -140,6 +140,7 @@ class T(Template):
     def _class_def_from(s):                 s.indent += 4;                          return f"class {s.n[1]}({s.n[2]}):{s.body(s.wt(s.n[3]))}"
     def _with(s):                           s.indent += 4;                          return f"with {s.wt(s.n[1])} as {s.wt(s.n[2])}:{s.body(s.wt(s.n[3]))}"
     def _return(s):                                                                 return f"return {s.wt(s.n[1])}"
+    def _yield(s):                                                                  return f"yield {s.wt(s.n[1])}"
     def _del(s):                                                                    return f"del {s.wt(s.n[1])}"
     def _and(s):                                                                    return f"({s.wt(s.n[1])} and {s.wt(s.n[2])})"
     def _or(s):                                                                     return f"({s.wt(s.n[1])} or {s.wt(s.n[2])})"

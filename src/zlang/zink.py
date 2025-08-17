@@ -91,6 +91,8 @@ class ZinkLexer(Lexer):
     SELF_EQUAL              = r"@<-"
     SUPER_INIT              = r"@\^"
 
+    LQARROW                 = r"<\?-"
+    LRARROW                 = r"-\?>"
     DB_ARROW                = r"<->"
     DB_DARROW               = r"<=>"
     LDARROW                 = r"<<-"
@@ -741,13 +743,12 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("with", p.expr0, p.expr1, p.program)
     
-    @_("LARROW end")
+    @_("LARROW end",
+       "LARROW expr end",
+       "LQARROW end",
+       "LQARROW expr end")
     def stmt(self, p):
-        return ("return", None)
-    
-    @_("LARROW expr end")
-    def stmt(self, p):
-        return ("return", p.expr)
+        return ("yield" if hasattr(p, "LQARROW") else "return", getattr(p, "expr", None))
     
     @_("DEL expr end")
     def stmt(self, p):
