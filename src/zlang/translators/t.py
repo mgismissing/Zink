@@ -22,6 +22,7 @@ class T:
             out = None
         if out != None: return out
         print_error(f"Language \"{self.name}\" doesn't support \"{ntype}\"")
+        exit(1)
     
     def empty_body(s):
         return []
