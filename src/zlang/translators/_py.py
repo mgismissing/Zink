@@ -132,7 +132,6 @@ class T(Template):
     def _func_def_async_untyped(s):                                                 return f"async {s._func_def_untyped()}"
     def _func_def_async_self_untyped(s):                                            return f"async {s._func_def_self_untyped()}"
     def _func_def_async__(s):                                                       return f"async {s._func_def__()}"
-    def _func_def_async__init(s):                                                   return f"async {s._func_def__init()}"
     def _func_assign_self(s):                                                       return s.wt(s.n[1])
     def _func_assign_super(s):                                                      return s.wt(s.n[1])
     def _class_def(s):                      s.indent += 4;                          return f"class {s.n[1]}:{s.body(s.wt(s.n[2]))}"

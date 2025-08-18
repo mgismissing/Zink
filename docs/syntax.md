@@ -75,7 +75,12 @@ These statements are made up of a keyword and can be followed by an expression. 
 | `pass`                | Doesn't do anything.                                                      |
 | `next`                | Skips to the next iteration in a loop.                                    |
 | `break`               | Exits out of the current loop.                                            |
-| `global a`            | Specifies that the global `a` should be used instead of the local one.    |
+| `global a`            | Specifies that the global `a` should be used.                             |
+| `global a = b`        | Assigns `b` to the global `a`.                                            |
+| `!local a`            | Specifies that the nonlocal `a` should be used.                           |
+| `!local a = b`        | Assigns `b` to the nonlocal `a`.                                          |
+| `local a`             | Specifies that the local `a` should be used.                              |
+| `local a = b`         | Assigns `b` to the local `a`.                                             |
 | `<-`                  | Returns `None`.                                                           |
 | `<-a`                 | Returns `a`.                                                              |
 | `del a`               | Deletes `a`.                                                              |

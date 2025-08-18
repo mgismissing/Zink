@@ -79,8 +79,10 @@ def main():
                     out = "\n".join(parsed)
                     if len(args.files) == 1:
                         if args.verbose: print(f"\b\b\b\b--> Done!")
-                        rung["__file__"] = file
-                        exec(out, rung)
+                        if args.lang == "py":
+                            rung["__file__"] = file
+                            exec(out, rung)
+                        else: print(out)
                     elif len(args.files) % 2 == 0:
                         with open(args.files[i+1], "w") as fout:
                             fout.write("\n".join(parsed))
@@ -103,11 +105,12 @@ def main():
                     print_error(e)
                 else:
                     if parsed:
-                        if args.verbose: print("\n".join(parsed))
-                        try:
-                            exec("\n".join(parsed), rung)
-                        except Exception as e:
-                            print_error(f"Python {e.__class__.__name__}: {e}")
+                        if args.verbose or args.lang != "py": print("\n".join(parsed))
+                        if args.lang == "py":
+                            try:
+                                exec("\n".join(parsed), rung)
+                            except Exception as e:
+                                print_error(f"Python {e.__class__.__name__}: {e}")
         except KeyboardInterrupt:
             print()
 

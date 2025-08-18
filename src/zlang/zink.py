@@ -38,7 +38,7 @@ class ZinkLexer(Lexer):
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
         "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
-        "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL",
+        "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL", "LOCAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
         "LQARROW", "RQARROW", "LARROW", "RARROW", "LDARROW", "RDARROW", "LSMARROW", "RSMARROW", "USMARROW", "DSMARROW", "LBARROW", "RBARROW",
@@ -188,6 +188,7 @@ class ZinkLexer(Lexer):
     ID["continue"]          = "CONTINUE"
     ID["next"]              = "NEXT"
     ID["global"]            = "GLOBAL"
+    ID["local"]             = "LOCAL"
     ID["break"]             = "BREAK"
     ID["True"]              = "TRUE"
     ID["False"]             = "FALSE"
@@ -654,6 +655,26 @@ class ZinkParser(Parser):
     @_("GLOBAL var end")
     def stmt(self, p):
         return ("global", p.var)
+    
+    @_("EXCLAMATION LOCAL var end")
+    def stmt(self, p):
+        return ("nonlocal", p.var)
+    
+    @_("LOCAL var end")
+    def stmt(self, p):
+        return ("local", p.var)
+    
+    @_("GLOBAL var EQUAL expr end")
+    def stmt(self, p):
+        return ("global_set", p.var, p.expr)
+    
+    @_("EXCLAMATION LOCAL var EQUAL expr end")
+    def stmt(self, p):
+        return ("nonlocal_set", p.var, p.expr)
+    
+    @_("LOCAL var EQUAL expr end")
+    def stmt(self, p):
+        return ("local_set", p.var, p.expr)
     
     @_("DEF ID end program DOT",
        "DEF MATMUL ID end program DOT",
