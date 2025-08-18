@@ -1019,7 +1019,7 @@ class ZinkParser(Parser):
 
     @_("LPAREN expr RPAREN")
     def expr(self, p):
-        return (p.expr)
+        return ("PAREN", p.expr)
     
     @_("expr LBRACK expr RBRACK %prec INDEX")
     def expr(self, p):

@@ -40,6 +40,8 @@ class T:
         return ""
     def _RAWSTRING(s):
         return s.n[1]
+    def _PAREN(s):
+        return f"({s.wt(s.n[1])})"
     
     def _program(s):
         out = []
