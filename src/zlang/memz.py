@@ -118,13 +118,6 @@ class ZinkLexer(Lexer):
     DB_LESS_THAN            = r"<<"
     DB_GREATER_THAN         = r">>"
 
-    CMP_E                   = r"=="
-    CMP_NE                  = r"!="
-    CMP_LE                  = r"<="
-    CMP_GE                  = r">="
-    CMP_L                   = r"<"
-    CMP_G                   = r">"
-
     EQUAL                   = r"="
 
     LPAREN                  = r"\("
@@ -143,7 +136,7 @@ class ZinkLexer(Lexer):
 
     SPACE                   = r" "
 
-    ID["if"]                = "IF"
+    ID["bet"]               = "IF"
     ID["sus"]               = "ELIF"
     ID["imp"]               = "ELSE"
     ID["while"]             = "WHILE"
@@ -182,6 +175,13 @@ class ZinkLexer(Lexer):
     ID["case"]              = "CASE"
     ID["ragebait"]          = "IGNORE"
     ID["repeat"]            = "TIMES"
+
+    ID["same"]              = "CMP_E"
+    ID["cappin"]            = "CMP_NE"
+    ID["lil"]               = "CMP_LE"
+    ID["big"]               = "CMP_GE"
+    ID["lilbro"]            = "CMP_L"
+    ID["bigbro"]            = "CMP_G"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
