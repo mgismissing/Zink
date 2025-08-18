@@ -1,7 +1,7 @@
 from .zink import ZinkLexer, ZinkParser
 from . import translators
 from .logger import print_info, print_warn, print_error
-from argparse import ArgumentParser
+from argparse import ArgumentParser, SUPPRESS as ARG_HELP_HIDE
 from sly.lex import LexError
 import colorama
 
@@ -34,12 +34,17 @@ def parse_args():
         action="store_true",
         help="suppress obsolete warnings"
     )
+    parser.add_argument(
+        "--memz",
+        action="store_true",
+        help=ARG_HELP_HIDE
+    )
     return parser.parse_args()
 
 def main():
     colorama.init(autoreset=True)
     args = parse_args()
-    lexer = ZinkLexer()
+    lexer = ZinkLexer() if not args.memz else translators.mem()
     parser = ZinkParser(
         ignore_obsolete=args.ignore_obsolete,
         include_comments=args.pretty,
