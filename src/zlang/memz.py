@@ -23,6 +23,8 @@ class ZinkLexer(Lexer):
         "COMMENT"
     }
 
+    ignore                  = " \t"
+
     @_(r"yo .*\n")
     def COMMENT(self, t):
         t.value = t.value[3:].strip("\n")
@@ -141,7 +143,7 @@ class ZinkLexer(Lexer):
 
     SPACE                   = r" "
 
-    ID["may"]               = "IF"
+    ID["if"]                = "IF"
     ID["sus"]               = "ELIF"
     ID["imp"]               = "ELSE"
     ID["while"]             = "WHILE"
