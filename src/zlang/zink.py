@@ -586,6 +586,14 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("for_at", p.args, p.expr0, p.expr1, p.program)
     
+    @_("FOR args RARROW expr end program DOT ELSE end program DOT end")
+    def stmt(self, p):
+        return ("for_else", p.args, p.expr, p.program0, p.program1)
+    
+    @_("FOR args AT expr RARROW expr end program DOT ELSE end program DOT end")
+    def stmt(self, p):
+        return ("for_at_else", p.args, p.expr0, p.expr1, p.program0, p.program1)
+    
     @_("TIMES expr end program DOT end")
     def stmt(self, p):
         return ("times", p.expr, p.program)

@@ -104,6 +104,8 @@ class T(Template):
     def _while(s):                          s.indent += 4;                          return f"while {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
     def _for(s):                            s.indent += 4;                          return f"for {s.jwt(s.n[1], ", ")} in {s.wt(s.n[2])}:{s.body(s.wt(s.n[3]))}"
     def _for_at(s):                         s.indent += 4;                          return f"for {s.wt(s.n[2])}, ({s.jwt(s.n[1], ", ")}) in enumerate({s.wt(s.n[3])}):{s.body(s.wt(s.n[4]))}"
+    def _for_else(s):                                                               return f"{s._for()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[4]))}"
+    def _for_at_else(s):                                                            return f"{s._for_at()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[4]))}"
     def _times(s):                          s.indent += 4;                          return f"for _ in range({s.wt(s.n[1])}):\n{" " * s.indent}del _{s.body(s.wt(s.n[2]))}"
     def _if(s):                             s.indent += 4;                          return f"if {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
     def _if_else(s):                                                                return f"{s._if()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[3]))}"
