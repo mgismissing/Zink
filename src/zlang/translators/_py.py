@@ -147,7 +147,7 @@ class T(Template):
     def _del(s):                                                                    return f"del {s.wt(s.n[1])}"
     def _and(s):                                                                    return f"{s.wt(s.n[1])} and {s.wt(s.n[2])}"
     def _or(s):                                                                     return f"{s.wt(s.n[1])} or {s.wt(s.n[2])}"
-    def _not(s):                                                                    return f"not {s.wt(s.n[1])})"
+    def _not(s):                                                                    return f"not {s.wt(s.n[1])}"
     def _is(s):                                                                     return f"{s.wt(s.n[1])} is {s.wt(s.n[2])}"
     def _in(s):                                                                     return f"{s.wt(s.n[1])} in {s.wt(s.n[2])}"
     def _lambda(s):                                                                 return f"(lambda {s.jwt(s.n[2], ", ")}: {s.wt(s.n[1])})"
