@@ -8,6 +8,8 @@ class FilteredLogger(object):
     def __init__(self, f, exit: bool = True):
         self.f = f
         self.exit = exit
+        self.had_warnings = False
+        self.had_errors = False
 
     def debug(self, msg, *args, **kwargs):
         self.f.write(_info((msg % args) + '\n'))
@@ -15,6 +17,7 @@ class FilteredLogger(object):
     info = debug
 
     def warning(self, msg, *args, **kwargs):
+        self.had_warnings = True
         tolog = (msg % args)
         if "defined, but not used" in tolog: return
         if "unused tokens" in tolog: return
@@ -22,9 +25,16 @@ class FilteredLogger(object):
         if self.exit and "conflict" in tolog: exit(1)
 
     def error(self, msg, *args, **kwargs):
+        self.had_errors = True
         self.f.write(_error((msg % args) + "\n"))
 
     critical = error
+
+    def reset_warnings(self):
+        self.had_warnings = False
+
+    def reset_errors(self):
+        self.had_errors = False
 
 class ZinkLexer(Lexer):
     tokens = {
@@ -239,6 +249,7 @@ class ZinkParser(Parser):
     debug = False
     debugfile = "parser.txt" if debug else None
     log = FilteredLogger(sys.stderr, exit=not debug)
+    had_errors = False
 
     def __init__(self, ignore_obsolete: bool = False, include_comments: bool = False, include_empty_lines: bool = False):
         super().__init__()
@@ -247,6 +258,7 @@ class ZinkParser(Parser):
         self.include_empty_lines = include_empty_lines
 
     def error(self, token):
+        self.had_errors = True
         if token:
             lineno = getattr(token, "lineno", 0)
             if lineno:
@@ -255,6 +267,9 @@ class ZinkParser(Parser):
                 sys.stderr.write(_error(f"Token \"{token.type}\"\n"))
         else:
             sys.stderr.write(_error("Unexpected end of file\n"))
+    
+    def reset_errors(self):
+        self.had_errors = False
 
     tokens = ZinkLexer.tokens
 

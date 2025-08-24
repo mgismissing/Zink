@@ -80,7 +80,7 @@ def main():
                 read = f.read()
                 if not read.endswith("\n"): read += "\n"
                 parsed = parse(read)
-                if parsed != None:
+                if parsed != None and not parser.had_errors:
                     out = "\n".join(parsed)
                     if len(args.files) == 1:
                         if args.verbose: print(f"\b\b\b\b--> Done!")
@@ -95,6 +95,8 @@ def main():
                     else:
                         print(end="\r"); print_error(f"Unspecified output file for \"{args.files[-1]}\"")
                         exit(5)
+                elif parser.had_errors:
+                    exit(2)
                 else:
                     print_error("Unknown parser error")
                     exit(2)
