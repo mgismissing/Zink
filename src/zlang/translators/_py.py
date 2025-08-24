@@ -154,8 +154,6 @@ class T(Template):
     def _decorator(s):                                                              return f"@{s.wt(s.n[1])}"
     def _self(s):                                                                   return f"self"
     def _super(s):                                                                  return f"super()"
-
-    def escape(s, text: str):
-        return text.replace(r"\"", "\"").replace("'", r"\'")
+    
     def empty_body(s):
         return [" "*s.indent+s._pass()]
