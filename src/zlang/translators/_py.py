@@ -4,8 +4,8 @@ class T(Template):
     def __init__(self): super().__init__("Python")
     
     def _NUMBER(s):                                                                 return str(s.n[1])
-    def _STRING(s):                                                                 return f"'{s.escape(s.n[1])}'"
-    def _BSTRING(s):                                                                return f"b'{s.escape(s.n[1])}'"
+    def _STRING(s):                                                                 return f"\"{s.n[1]}\""
+    def _BSTRING(s):                                                                return f"b\"{s.n[1]}\""
     def _RSTRING(s):                                                                return f"r'{s.n[1]}'"
     def _TRUE(s):                                                                   return "True"
     def _FALSE(s):                                                                  return "False"
