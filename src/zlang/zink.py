@@ -831,77 +831,56 @@ class ZinkParser(Parser):
     def expr(self, p):
         return p.func
     
-    @_("LBRACK args RBRACK")
+    @_("LBRACK RBRACK",
+       "LBRACK args RBRACK",
+       "LBRACK NEWLINE args NEWLINE RBRACK")
     def tuple(self, p):
-        return ("tuple", p.args)
-    
-    @_("LBRACK NEWLINE args NEWLINE RBRACK")
-    def tuple(self, p):
-        return ("tuple", p.args)
-    
-    @_("LBRACK RBRACK")
-    def tuple(self, p):
-        return ("tuple", [])
+        return ("tuple", getattr(p, "args", []))
     
     @_("tuple")
     def expr(self, p):
         return p.tuple
     
-    @_("LBRACK args COMMA RBRACK")
+    @_("LBRACK COMMA RBRACK",
+       "LBRACK args COMMA RBRACK",
+       "LBRACK NEWLINE args COMMA NEWLINE RBRACK")
     def list(self, p):
-        return ("list", p.args)
-    
-    @_("LBRACK NEWLINE args COMMA NEWLINE RBRACK")
-    def list(self, p):
-        return ("list", p.args)
-    
-    @_("LBRACK COMMA RBRACK")
-    def list(self, p):
-        return ("list", [])
+        return ("list", getattr(p, "args", []))
     
     @_("list")
     def expr(self, p):
         return p.list
     
-    @_("LBRACK kwargs RBRACK")
+    @_("LBRACK EQUAL RBRACK",
+       "LBRACK kwargs RBRACK",
+       "LBRACK NEWLINE kwargs NEWLINE RBRACK")
     def dict(self, p):
-        return ("dict", p.kwargs)
-    
-    @_("LBRACK NEWLINE kwargs NEWLINE RBRACK")
-    def dict(self, p):
-        return ("dict", p.kwargs)
-    
-    @_("LBRACK EQUAL RBRACK")
-    def dict(self, p):
-        return ("dict", [])
+        return ("dict", getattr(p, "kwargs", []))
     
     @_("dict")
     def expr(self, p):
         return p.dict
     
-    @_("LBRACK expr DB_ARROW expr RBRACK")
+    @_("LBRACK expr DB_ARROW expr RBRACK",
+       "LBRACK expr DB_ARROW expr RPAREN",
+       "LPAREN expr DB_ARROW expr RBRACK",
+       "LPAREN expr DB_ARROW expr RPAREN",
+       "LBRACK expr DB_ARROW expr COMMA expr RBRACK",
+       "LBRACK expr DB_ARROW expr COMMA expr RPAREN",
+       "LPAREN expr DB_ARROW expr COMMA expr RBRACK",
+       "LPAREN expr DB_ARROW expr COMMA expr RPAREN")
     def range(self, p):
-        return ("range_inc_inc", p.expr0, p.expr1, ("NUMBER", "1"))
+        return (f"range{"_inc" if hasattr(p, "LBRACK") else "_exc"}{"_inc" if hasattr(p, "RBRACK") else "_exc"}", p.expr0, p.expr1, getattr(p, "expr2", ("NUMBER", "1")))
     
-    @_("LBRACK expr DB_ARROW expr RPAREN")
+    @_("LBRACE expr DB_ARROW expr RBRACE",
+       "LBRACE expr DB_ARROW expr COMMA expr RBRACE")
     def range(self, p):
-        return ("range_inc_exc", p.expr0, p.expr1, ("NUMBER", "1"))
+        return ("range", p.expr0, p.expr1, getattr(p, "expr2", ("NUMBER", "1")))
     
-    @_("LPAREN expr DB_ARROW expr RBRACK")
+    @_("LBRACE RARROW expr RBRACE",
+       "LBRACE RARROW expr COMMA expr RBRACE")
     def range(self, p):
-        return ("range_exc_inc", p.expr0, p.expr1, ("NUMBER", "1"))
-    
-    @_("LPAREN expr DB_ARROW expr RPAREN")
-    def range(self, p):
-        return ("range_exc_exc", p.expr0, p.expr1, ("NUMBER", "1"))
-    
-    @_("LBRACE expr DB_ARROW expr RBRACE")
-    def range(self, p):
-        return ("range", p.expr0, p.expr1, ("NUMBER", "1"))
-    
-    @_("LBRACE RARROW expr RBRACE")
-    def range(self, p):
-        return ("range", ("NUMBER", "0"), p.expr, ("NUMBER", "1"))
+        return ("range", ("NUMBER", "0"), getattr(p, "expr", p.expr0), getattr(p, "expr1", ("NUMBER", "1")))
     
     @_("range")
     def expr(self, p):
