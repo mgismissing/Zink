@@ -153,6 +153,8 @@ class T(Template):
     def _in(s):                                                                     return f"{s.wt(s.n[1])} in {s.wt(s.n[2])}"
     def _lambda(s):                                                                 return f"(lambda {s.jwt(s.n[2], ", ")}: {s.wt(s.n[1])})"
     def _decorator(s):                                                              return f"@{s.wt(s.n[1])}"
+    def _slash_arg(s):                                                              return f"/"
+    def _asterisk_arg(s):                                                           return f"*"
     def _self(s):                                                                   return f"self"
     def _super(s):                                                                  return f"super()"
     

@@ -387,6 +387,14 @@ class ZinkParser(Parser):
     def farg(self, p):
         return ("default_typed_arg", p.ID, p.type, p.expr)
     
+    @_("SLASH")
+    def farg(self, p):
+        return ("slash_arg",)
+    
+    @_("ASTERISK")
+    def farg(self, p):
+        return ("asterisk_arg",)
+    
     @_("fargs COMMA farg",
        "fargs COMMA MATMUL farg",
        "fargs COMMA CARET farg",
