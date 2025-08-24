@@ -942,6 +942,10 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("modulo", p.expr0, p.expr1)
     
+    @_("expr STRJOIN expr")
+    def expr(self, p):
+        return ("strjoin", p.expr0, p.expr1)
+    
     @_("expr DB_PLUS %prec INCREMENT")
     def expr(self, p):
         return ("inc_after", p.expr)
@@ -1065,10 +1069,6 @@ class ZinkParser(Parser):
     @_("expr DOT expr %prec MEMBER")
     def expr(self, p):
         return ("member", p.expr0, p.expr1)
-    
-    @_("expr STRJOIN expr")
-    def expr(self, p):
-        return ("strjoin", p.expr0, p.expr1)
     
     @_("USMARROW expr %prec STRING_UPPER")
     def expr(self, p):
