@@ -2,10 +2,10 @@ from .t import T as Template
 
 class T(Template):
     def __init__(self): super().__init__("Python")
-
+    
     def _NUMBER(s):                                                                 return str(s.n[1])
-    def _STRING(s):                                                                 return f"\"{s.n[1]}\""
-    def _BSTRING(s):                                                                return f"b\"{s.n[1]}\""
+    def _STRING(s):                                                                 return f"'{s.escape(s.n[1])}'"
+    def _BSTRING(s):                                                                return f"b'{s.escape(s.n[1])}'"
     def _RSTRING(s):                                                                return f"r'{s.n[1]}'"
     def _TRUE(s):                                                                   return "True"
     def _FALSE(s):                                                                  return "False"
@@ -21,6 +21,7 @@ class T(Template):
     def _assert(s):                                                                 return f"assert {s.wt(s.n[1])}"
     def _raise(s):                                                                  return f"raise {s.wt(s.n[1])}"
     def _func(s):                                                                   return f"{s.wt(s.n[1])}({s.jwt(s.n[2], ", ")})"
+    def _func_self(s):                                                              return f"{(_ := s.wt(s.n[1]))}.{s.wt(s.n[2])}({_}{f", {_}" if (_ := s.jwt(s.n[3], ", ")) else ""})"
     def _tuple(s):                                                                  return f"({s.jwt(s.n[1], ", ")}{"," if len(s.n[1]) == 1 else ""})"
     def _list(s):                                                                   return f"[{s.jwt(s.n[1], ", ")}]"
     def _dict(s):                                                                   return "{"+(", ".join(f"{s.wt(k)}: {s.wt(v)}" for k, v in s.n[1]))+"}"
@@ -51,6 +52,7 @@ class T(Template):
     def _set_bitwise_shr(s):                s.dollar = s.wt(s.n[1]);                return f"{s.dollar} >>= {s.wt(s.n[2])}"
     def _set_self(s):                                                               return f"self.{(_ := s.wt(s.n[1]))} = {_}"
     def _set_cast(s):                       s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = type({s.wt(s.n[2])}())({s.dollar})"
+    def _set_strjoin(s):                    s.dollar = s.wt(s.n[1]);                return f"{s.dollar} += str({s.wt(s.n[2])})"
     def _add(s):                                                                    return f"{s.wt(s.n[1])} + {s.wt(s.n[2])}"
     def _subtract(s):                                                               return f"{s.wt(s.n[1])} - {s.wt(s.n[2])}"
     def _multiply(s):                                                               return f"{s.wt(s.n[1])} * {s.wt(s.n[2])}"
@@ -68,6 +70,7 @@ class T(Template):
     def _bitwise_not(s):                                                            return f"~{s.wt(s.n[1])}"
     def _bitwise_shl(s):                                                            return f"{s.wt(s.n[1])} << {s.wt(s.n[2])}"
     def _bitwise_shr(s):                                                            return f"{s.wt(s.n[1])} >> {s.wt(s.n[2])}"
+    def _strjoin(s):                                                                return f"{s.wt(s.n[1])} + str({s.wt(s.n[2])})"
     def _cmp_e(s):                                                                  return f"{s.wt(s.n[1])} == {s.wt(s.n[2])}"
     def _cmp_g(s):                                                                  return f"{s.wt(s.n[1])} > {s.wt(s.n[2])}"
     def _cmp_l(s):                                                                  return f"{s.wt(s.n[1])} < {s.wt(s.n[2])}"
@@ -152,5 +155,7 @@ class T(Template):
     def _self(s):                                                                   return f"self"
     def _super(s):                                                                  return f"super()"
 
+    def escape(s):
+        return s.replace(r"\"", "\"").replace("'", r"\'")
     def empty_body(s):
         return [" "*s.indent+s._pass()]

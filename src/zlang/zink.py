@@ -31,8 +31,8 @@ class ZinkLexer(Lexer):
         "ID", "NUMBER", "STRING", "BSTRING", "RSTRING", "RAWSTRING", "TRUE", "FALSE", "NONE",
         "EQUAL",
         "DB_PLUS", "DB_MINUS",
-        "PLUS", "MINUS", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL",
-        "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "COLON_EQUAL", "DB_ASTERISK_EQUAL", "DB_SLASH_EQUAL", "PERCENTAGE_EQUAL", "MATMUL_EQUAL", "SELF_EQUAL",
+        "PLUS", "MINUS", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL", "STRJOIN",
+        "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "COLON_EQUAL", "DB_ASTERISK_EQUAL", "DB_SLASH_EQUAL", "PERCENTAGE_EQUAL", "MATMUL_EQUAL", "SELF_EQUAL", "STRJOIN_EQUAL",
         "AMPERSAND", "PIPE", "CARET", "TILDE", "DB_LESS_THAN", "DB_GREATER_THAN",
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
@@ -120,6 +120,7 @@ class ZinkLexer(Lexer):
     COLON_EQUAL             = r":="
     PERCENTAGE_EQUAL        = r"%="
     MATMUL_EQUAL            = r"@="
+    STRJOIN_EQUAL           = r"\.\.="
 
     DB_ASTERISK             = r"\*\*"
     DB_SLASH                = r"//"
@@ -129,6 +130,7 @@ class ZinkLexer(Lexer):
     SLASH                   = r"/"
     PERCENTAGE              = r"%"
     MATMUL                  = r"@"
+    STRJOIN                 = r"\.\."
 
     AMPERSAND_EQUAL         = r"&="
     PIPE_EQUAL              = r"\|="
@@ -259,17 +261,17 @@ class ZinkParser(Parser):
     precedence = (
         ("right", "EQUAL"),
         ("right", "GENERATOR", "TERNARY"),
-        ("nonassoc", "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "PERCENTAGE_EQUAL", "AMPERSAND_EQUAL", "MATMUL_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL"),
+        ("nonassoc", "PLUS_EQUAL", "MINUS_EQUAL", "ASTERISK_EQUAL", "SLASH_EQUAL", "DOT_EQUAL", "PERCENTAGE_EQUAL", "AMPERSAND_EQUAL", "MATMUL_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL", "STRJOIN_EQUAL"),
         ("right", "NOT"),
         ("left", "AND", "OR"),
         ("nonassoc", "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE", "SAME", "IN"),
         ("left", "INDEX"),
-        ("left", "PLUS", "MINUS"),
+        ("left", "PLUS", "MINUS", "STRJOIN"),
         ("left", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL", "AMPERSAND", "PIPE", "CARET", "DB_LESS_THAN", "DB_GREATER_THAN", "COLON_EQUAL"),
         ("right", "UNARY_PLUS", "UNARY_MINUS", "STRING_UPPER", "STRING_LOWER", "LENGTH", "TYPE", "TILDE"),
         ("left", "INCREMENT", "DECREMENT"),
         ("left", "AS", "LIKE"),
-        ("left", "MEMBER", "DOT", "LPAREN", "EXCLAMATION"),
+        ("left", "MEMBER", "DOT", "LPAREN", "EXCLAMATION")
     )
 
     @_("stmts")
@@ -537,6 +539,10 @@ class ZinkParser(Parser):
     @_("SELF_EQUAL expr end")
     def stmt(self, p):
         return ("set_self", p.expr)
+    
+    @_("expr STRJOIN_EQUAL expr end")
+    def stmt(self, p):
+        return ("set_strjoin", p.expr0, p.expr1)
     
     @_("expr TO expr end")
     def stmt(self, p):
@@ -809,18 +815,18 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("NONE",)
     
-    @_("expr LPAREN fcargs RPAREN")
+    @_("expr LPAREN fcargs RPAREN",
+       "expr LPAREN NEWLINE fcargs NEWLINE RPAREN",
+       "expr EXCLAMATION")
     def func(self, p):
-        return ("func", p.expr, p.fcargs)
+        return ("func", p.expr, getattr(p, "fcargs", []))
     
-    @_("expr LPAREN NEWLINE fcargs NEWLINE RPAREN")
+    @_("expr DOT var DOLLAR LPAREN fcargs RPAREN",
+       "expr DOT var DOLLAR LPAREN NEWLINE fcargs NEWLINE RPAREN",
+       "expr DOT var DOLLAR EXCLAMATION")
     def func(self, p):
-        return ("func", p.expr, p.fcargs)
-    
-    @_("expr EXCLAMATION")
-    def func(self, p):
-        return ("func", p.expr, [])
-    
+        return ("func_self", p.expr, p.var, getattr(p, "fcargs", []))
+
     @_("func")
     def expr(self, p):
         return p.func
@@ -1080,6 +1086,10 @@ class ZinkParser(Parser):
     @_("expr DOT expr %prec MEMBER")
     def expr(self, p):
         return ("member", p.expr0, p.expr1)
+    
+    @_("expr STRJOIN expr")
+    def expr(self, p):
+        return ("strjoin", p.expr0, p.expr1)
     
     @_("USMARROW expr %prec STRING_UPPER")
     def expr(self, p):

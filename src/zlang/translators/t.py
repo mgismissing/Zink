@@ -35,6 +35,8 @@ class T:
         return self.jwt(filter(func, nodes), sep, dollar, indent)
     def body(self, content: list[str]):
         return "\n"+"\n".join(content if len(content) > 0 else self.empty_body())
+    def escape(self, s: str):
+        return s
     
     def _EMPTY_LINE(s):
         return ""

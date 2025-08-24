@@ -17,6 +17,7 @@ class T(Template):
     def _assert(s):                                                                 return f"assert({s.wt(s.n[1])})"
     def _raise(s):                                                                  return f"error({s.wt(s.n[1])})"
     def _func(s):                                                                   return f"{s.wt(s.n[1])}({s.jwt(s.n[2], ", ")})"
+    def _func_self(s):                                                              return f"{s.wt(s.n[1])}:{s.wt(s.n[2])}({s.jwt(s.n[3], ", ")})"
     def _tuple(s):                                                                  return "{"+f"{s.jwt(s.n[1], ", ")}{"," if len(s.n[1]) == 1 else ""}"+"}"
     def _list(s):                                                                   return s._tuple()
     def _dict(s):                                                                   return "{"+(", ".join(f"{s.wt(k)}={s.wt(v)}" for k, v in s.n[1]))+"}"
@@ -31,6 +32,7 @@ class T(Template):
     def _set_power(s):                      s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = math.pow({s.dollar}, {s.wt(s.n[2])})"
     def _set_floor_divide(s):               s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = math.floor({s.dollar} / {s.wt(s.n[2])})"
     def _set_modulo(s):                     s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = {s.dollar} % {s.wt(s.n[2])}"
+    def _set_strjoin(s):                    s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = {s.dollar} .. {s.wt(s.n[2])}"
     def _add(s):                                                                    return f"{s.wt(s.n[1])} + {s.wt(s.n[2])}"
     def _subtract(s):                                                               return f"{s.wt(s.n[1])} - {s.wt(s.n[2])}"
     def _multiply(s):                                                               return f"{s.wt(s.n[1])} * {s.wt(s.n[2])}"
@@ -39,6 +41,7 @@ class T(Template):
     def _power(s):                                                                  return f"math.pow({s.wt(s.n[1])}, {s.wt(s.n[2])})"
     def _floor_divide(s):                                                           return f"math.floor({s.wt(s.n[1])} / {s.wt(s.n[2])})"
     def _modulo(s):                                                                 return f"{s.wt(s.n[1])} % {s.wt(s.n[2])}"
+    def _strjoin(s):                                                                return f"{s.wt(s.n[1])} .. {s.wt(s.n[2])}"
     def _cmp_e(s):                                                                  return f"{s.wt(s.n[1])} == {s.wt(s.n[2])}"
     def _cmp_g(s):                                                                  return f"{s.wt(s.n[1])} > {s.wt(s.n[2])}"
     def _cmp_l(s):                                                                  return f"{s.wt(s.n[1])} < {s.wt(s.n[2])}"
