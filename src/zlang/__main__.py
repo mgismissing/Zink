@@ -96,7 +96,7 @@ def main():
                         print(end="\r"); print_error(f"Unspecified output file for \"{args.files[-1]}\"")
                         exit(5)
                 elif parser.had_errors:
-                    exit(2)
+                    exit(4)
                 else:
                     print_error("Unknown parser error")
                     exit(2)
