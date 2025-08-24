@@ -880,7 +880,7 @@ class ZinkParser(Parser):
     @_("LBRACE RARROW expr RBRACE",
        "LBRACE RARROW expr COMMA expr RBRACE")
     def range(self, p):
-        return ("range", ("NUMBER", "0"), getattr(p, "expr", p.expr0), getattr(p, "expr1", ("NUMBER", "1")))
+        return ("range", ("NUMBER", "0"), p.expr0 if hasattr(p, "expr0") else p.expr, getattr(p, "expr1", ("NUMBER", "1")))
     
     @_("range")
     def expr(self, p):
