@@ -47,7 +47,7 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "NAMESPACE", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
         "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL", "LOCAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
@@ -220,6 +220,7 @@ class ZinkLexer(Lexer):
     ID["case"]              = "CASE"
     ID["ignore"]            = "IGNORE"
     ID["times"]             = "TIMES"
+    ID["namespace"]         = "NAMESPACE"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -778,6 +779,10 @@ class ZinkParser(Parser):
     @_("CLASS ID FROM ID end program DOT")
     def stmt(self, p):
         return ("class_def_from", p.ID0, p.ID1, p.program)
+    
+    @_("NAMESPACE ID end program DOT")
+    def stmt(self, p):
+        return ("namespace_def", p.ID, p.program)
     
     @_("WITH expr AS expr end program DOT")
     def stmt(self, p):
