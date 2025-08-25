@@ -66,6 +66,8 @@ class T(Template):
     def _use_as_from(s):                                                            return f"local {s.n[2]} = require(\"{s.n[3]}\").{s.n[1]}"
     def _while(s):                          s.indent += 4;                          return f"while {s.wt(s.n[1])} do{s.body(s.wt(s.n[2]))}\n{" "*(s.indent-4)}end"
     def _for(s):                            s.indent += 4;                          return f"for {s.jwt(s.n[1], ", ")} in {s.wt(s.n[2])} do{s.body(s.wt(s.n[3]))}\n{" "*(s.indent-4)}end"
+    def _for_to(s):                         s.indent += 4;                          return f"for {s.wt(s.n[1])} = 0, {s.wt(s.n[2])}do{s.body(s.wt(s.n[3]))}\n{" "*(s.indent-4)}end"
+    def _for_from_to(s):                    s.indent += 4;                          return f"for {s.wt(s.n[1])} = {s.wt(s.n[2])}, {s.wt(s.n[3])} do{s.body(s.wt(s.n[4]))}\n{" "*(s.indent-4)}end"
     def _times(s):                          s.indent += 4;                          return f"for _ = 1, {s.wt(s.n[1])} do\n{" " * s.indent}_ = nil{s.body(s.wt(s.n[2]))}\n{" "*(s.indent-4)}end"
     def _if(s):                             s.indent += 4;                          return f"if {s.wt(s.n[1])} then{s.body(s.wt(s.n[2]))}\n{" "*(s.indent-4)}end"
     def _if_else(s):                        s.indent += 4;                          return f"if {s.wt(s.n[1])} then{s.body(s.wt(s.n[2]))}\n{" "*(s.indent-4)}else{s.body(s.wt(s.n[3]))}\n{" "*(s.indent-4)}end"
