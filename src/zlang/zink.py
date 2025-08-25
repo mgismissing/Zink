@@ -450,6 +450,14 @@ class ZinkParser(Parser):
     def kwargs(self, p):
         return [p.kwarg]
     
+    @_("ID")
+    def dotid(self, p):
+        return ("dotid", p.ID)
+
+    @_("ID DOT dotid")
+    def dotid(self, p):
+        return ("dotid_dot", p.ID, p.dotid)
+    
     @_("ELIF expr end program DOT",
        "ELIF expr end program DOT end")
     def if_elif(self, p):
@@ -714,51 +722,43 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("local_set", p.targs, p.args)
     
-    @_("ID")
-    def funcid(self, p):
-        return ("funcid", p.ID)
-
-    @_("ID DOT funcid")
-    def funcid(self, p):
-        return ("funcid_dot", p.ID, p.funcid)
-    
-    @_("DEF funcid end program DOT",
-       "DEF MATMUL COLON funcid end program DOT",
-       "DEF QUESTION COLON funcid end program DOT",
-       "DEF QUESTION MATMUL COLON funcid end program DOT",
-       "DEF funcid LPAREN fargs RPAREN end program DOT",
-       "DEF MATMUL COLON funcid LPAREN fargs RPAREN end program DOT",
-       "DEF QUESTION COLON funcid LPAREN fargs RPAREN end program DOT",
-       "DEF QUESTION MATMUL COLON funcid LPAREN fargs RPAREN end program DOT",
-       "DEF funcid COLON type end program DOT",
-       "DEF MATMUL COLON funcid COLON type end program DOT",
-       "DEF QUESTION COLON funcid COLON type end program DOT",
-       "DEF QUESTION MATMUL COLON funcid COLON type end program DOT",
-       "DEF funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "DEF MATMUL COLON funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "DEF QUESTION COLON funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "DEF QUESTION MATMUL COLON funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "LOCAL DEF funcid end program DOT",
-       "LOCAL DEF MATMUL COLON funcid end program DOT",
-       "LOCAL DEF QUESTION COLON funcid end program DOT",
-       "LOCAL DEF QUESTION MATMUL COLON funcid end program DOT",
-       "LOCAL DEF funcid LPAREN fargs RPAREN end program DOT",
-       "LOCAL DEF MATMUL COLON funcid LPAREN fargs RPAREN end program DOT",
-       "LOCAL DEF QUESTION COLON funcid LPAREN fargs RPAREN end program DOT",
-       "LOCAL DEF QUESTION MATMUL COLON funcid LPAREN fargs RPAREN end program DOT",
-       "LOCAL DEF funcid COLON type end program DOT",
-       "LOCAL DEF MATMUL COLON funcid COLON type end program DOT",
-       "LOCAL DEF QUESTION COLON funcid COLON type end program DOT",
-       "LOCAL DEF QUESTION MATMUL COLON funcid COLON type end program DOT",
-       "LOCAL DEF funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "LOCAL DEF MATMUL COLON funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "LOCAL DEF QUESTION COLON funcid LPAREN fargs RPAREN COLON type end program DOT",
-       "LOCAL DEF QUESTION MATMUL COLON funcid LPAREN fargs RPAREN COLON type end program DOT")
+    @_("DEF dotid end program DOT",
+       "DEF MATMUL COLON dotid end program DOT",
+       "DEF QUESTION COLON dotid end program DOT",
+       "DEF QUESTION MATMUL COLON dotid end program DOT",
+       "DEF dotid LPAREN fargs RPAREN end program DOT",
+       "DEF MATMUL COLON dotid LPAREN fargs RPAREN end program DOT",
+       "DEF QUESTION COLON dotid LPAREN fargs RPAREN end program DOT",
+       "DEF QUESTION MATMUL COLON dotid LPAREN fargs RPAREN end program DOT",
+       "DEF dotid COLON type end program DOT",
+       "DEF MATMUL COLON dotid COLON type end program DOT",
+       "DEF QUESTION COLON dotid COLON type end program DOT",
+       "DEF QUESTION MATMUL COLON dotid COLON type end program DOT",
+       "DEF dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF MATMUL COLON dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF QUESTION COLON dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "DEF QUESTION MATMUL COLON dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "LOCAL DEF dotid end program DOT",
+       "LOCAL DEF MATMUL COLON dotid end program DOT",
+       "LOCAL DEF QUESTION COLON dotid end program DOT",
+       "LOCAL DEF QUESTION MATMUL COLON dotid end program DOT",
+       "LOCAL DEF dotid LPAREN fargs RPAREN end program DOT",
+       "LOCAL DEF MATMUL COLON dotid LPAREN fargs RPAREN end program DOT",
+       "LOCAL DEF QUESTION COLON dotid LPAREN fargs RPAREN end program DOT",
+       "LOCAL DEF QUESTION MATMUL COLON dotid LPAREN fargs RPAREN end program DOT",
+       "LOCAL DEF dotid COLON type end program DOT",
+       "LOCAL DEF MATMUL COLON dotid COLON type end program DOT",
+       "LOCAL DEF QUESTION COLON dotid COLON type end program DOT",
+       "LOCAL DEF QUESTION MATMUL COLON dotid COLON type end program DOT",
+       "LOCAL DEF dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "LOCAL DEF MATMUL COLON dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "LOCAL DEF QUESTION COLON dotid LPAREN fargs RPAREN COLON type end program DOT",
+       "LOCAL DEF QUESTION MATMUL COLON dotid LPAREN fargs RPAREN COLON type end program DOT")
     def stmt(self, p):
         if hasattr(p, "type"):
-            return (f"func_def{"_local" if hasattr(p, "LOCAL") else ""}{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.funcid, getattr(p, "fargs", []), p.type, p.program)
+            return (f"func_def{"_local" if hasattr(p, "LOCAL") else ""}{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", p.dotid, getattr(p, "fargs", []), p.type, p.program)
         else:
-            return (f"func_def{"_local" if hasattr(p, "LOCAL") else ""}{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.funcid, getattr(p, "fargs", []), p.program)
+            return (f"func_def{"_local" if hasattr(p, "LOCAL") else ""}{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", p.dotid, getattr(p, "fargs", []), p.program)
     
     @_("SLASH ID end program DOT",
        "SLASH ID fargs end program DOT",

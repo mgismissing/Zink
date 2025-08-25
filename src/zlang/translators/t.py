@@ -54,7 +54,7 @@ class T:
         return s.n[1]
     def _var(s):
         return s.n[1] if s.n[1] != "$" else s.dollar
-    def _funcid(s):
+    def _dotid(s):
         return s.n[1]
-    def _funcid_dot(s):
+    def _dotid_dot(s):
         return f"{s.n[1]}.{s.wt(s.n[2])}"
