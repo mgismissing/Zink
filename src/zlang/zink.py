@@ -598,19 +598,19 @@ class ZinkParser(Parser):
     
     @_("USE dotid end")
     def stmt(self, p):
-        return ("use", p.ID)
+        return ("use", p.dotid)
     
     @_("USE dotid AS dotid end")
     def stmt(self, p):
-        return ("use_as", p.ID0, p.ID1)
+        return ("use_as", p.dotid0, p.dotid1)
     
     @_("USE dotid FROM dotid end")
     def stmt(self, p):
-        return ("use_from", p.ID0, p.ID1)
+        return ("use_from", p.dotid0, p.dotid1)
     
     @_("USE dotid AS dotid FROM dotid end")
     def stmt(self, p):
-        return ("use_as_from", p.ID0, p.ID1, p.ID2)
+        return ("use_as_from", p.dotid0, p.dotid1, p.dotid2)
     
     @_("WHILE expr end program DOT end")
     def stmt(self, p):
