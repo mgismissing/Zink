@@ -826,7 +826,7 @@ class ZinkParser(Parser):
        "LQARROW end",
        "LQARROW expr end")
     def stmt(self, p):
-        return ("yield" if hasattr(p, "LQARROW") else "return", getattr(p, "expr", None))
+        return ("yield" if hasattr(p, "LQARROW") else "return", getattr(p, "expr", ("NONE",)))
     
     @_("DEL expr end")
     def stmt(self, p):
