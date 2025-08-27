@@ -81,4 +81,4 @@ class T(Template):
     def _and(s):                                                                    return f"{s.wt(s.n[1])} and {s.wt(s.n[2])}"
     def _or(s):                                                                     return f"{s.wt(s.n[1])} or {s.wt(s.n[2])}"
     def _not(s):                                                                    return f"not {s.wt(s.n[1])}"
-    def _lambda(s):                                                                 return f"(function({s.jwt(s.n[2], ", ")}) return {s.wt(s.n[1])} end"
+    def _lambda(s):                                                                 return f"function({s.jwt(s.n[2], ", ")}) return {s.wt(s.n[1])} end"
