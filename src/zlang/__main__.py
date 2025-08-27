@@ -34,17 +34,12 @@ def parse_args():
         action="store_true",
         help="suppress obsolete warnings"
     )
-    parser.add_argument(
-        "--memz",
-        action="store_true",
-        help=ARG_HELP_HIDE
-    )
     return parser.parse_args()
 
 def main():
     colorama.init(autoreset=True)
     args = parse_args()
-    lexer = ZinkLexer() if not args.memz else translators.mem()
+    lexer = ZinkLexer()
     parser = ZinkParser(
         ignore_obsolete=args.ignore_obsolete,
         include_comments=args.pretty,
