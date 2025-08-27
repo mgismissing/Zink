@@ -86,7 +86,7 @@ class ZinkLexer(Lexer):
         t.value = t.value[2:-1]
         return t
     
-    @_(r'`(?:[^"\\]|\\.)*`')
+    @_(r'`(?:[^"\\]|\\.)*?`')
     def RAWSTRING(self, t):
         t.value = t.value[1:-1]
         return t
@@ -454,10 +454,18 @@ class ZinkParser(Parser):
     @_("ID")
     def dotid(self, p):
         return ("dotid", p.ID)
+    
+    @_("RAWSTRING")
+    def dotid(self, p):
+        return ("dotid", p.RAWSTRING)
 
     @_("ID DOT dotid")
     def dotid(self, p):
         return ("dotid_dot", p.ID, p.dotid)
+
+    @_("RAWSTRING DOT dotid")
+    def dotid(self, p):
+        return ("dotid_dot", p.RAWSTRING, p.dotid)
     
     @_("ELIF expr end program DOT",
        "ELIF expr end program DOT end")
