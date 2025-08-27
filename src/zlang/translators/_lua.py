@@ -75,6 +75,7 @@ class T(Template):
     def _if_elif_else(s):                   s.indent += 4;                          return f"if {s.wt(s.n[1])} then{s.body(s.wt(s.n[2]))}{s.body(list((" "*(s.indent-4))+f"elseif {s.wt(cond)} then{s.body(s.wt(prog))}" for cond, prog in s.n[3]))}\n{" "*(s.indent-4)}else{s.body(s.wt(s.n[4]))}\n{" "*(s.indent-4)}end"
     def _func_def_untyped(s):               s.indent += 4;                          return f"function {s.wt(s.n[1])}({s.jwt(s.n[2], ", ")}){s.body(s.wt(s.n[3]))}\n{" "*(s.indent-4)}end"
     def _func_def_local_untyped(s):         s.indent += 4;                          return f"local function {s.wt(s.n[1])}({s.jwt(s.n[2], ", ")}){s.body(s.wt(s.n[3]))}\n{" "*(s.indent-4)}end"
+    def _func_def_anon_untyped(s):          s.indent += 4;                          return f"function({s.jwt(s.n[1], ", ")}){s.body(s.wt(s.n[2]))}\n{" "*(s.indent-4)}end"
     def _return(s):                                                                 return f"return {s.wt(s.n[1])}"
     def _del(s):                                                                    return f"{s.wt(s.n[1])} = nil"
     def _and(s):                                                                    return f"{s.wt(s.n[1])} and {s.wt(s.n[2])}"

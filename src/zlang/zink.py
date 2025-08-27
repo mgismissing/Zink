@@ -47,7 +47,7 @@ class ZinkLexer(Lexer):
         "AMPERSAND_EQUAL", "PIPE_EQUAL", "CARET_EQUAL", "TILDE_EQUAL", "DB_LESS_THAN_EQUAL", "DB_GREATER_THAN_EQUAL",
         "LPAREN", "RPAREN", "LBRACK", "RBRACK", "LBRACE", "RBRACE",
         "DOT", "COLON", "SEMICOLON", "COMMA", "EXCLAMATION", "QUESTION",
-        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "NAMESPACE", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES",
+        "IF", "ELIF", "ELSE", "WHILE", "FOR", "ASSERT", "USE", "FROM", "AS", "LIKE", "AT", "IN", "TO", "TRY", "CATCH", "DEF", "CLASS", "NAMESPACE", "WITH", "DEL", "IS", "HAS", "RAISE", "BETWEEN", "MATCH", "CASE", "IGNORE", "TIMES", "ANON",
         "PASS", "CONTINUE", "NEXT", "BREAK", "GLOBAL", "LOCAL",
         "AND", "OR", "NOT",
         "CMP_L", "CMP_G", "CMP_E", "CMP_LE", "CMP_GE", "CMP_NE",
@@ -221,6 +221,7 @@ class ZinkLexer(Lexer):
     ID["ignore"]            = "IGNORE"
     ID["times"]             = "TIMES"
     ID["namespace"]         = "NAMESPACE"
+    ID["anon"]              = "ANON"
 
     @_(r"0x[0-9a-fA-F_]+", r"0b[01_]+", r"[0-9_]+", r"[0-9_]\.[0-9_]", r"\.[0-9_]")
     def NUMBER(self, t):
@@ -1169,6 +1170,28 @@ class ZinkParser(Parser):
     @_("LPAREN expr BETWEEN expr COMMA expr RPAREN")
     def expr(self, p):
         return ("between", p.expr0, p.expr1, p.expr2)
+    
+    @_("ANON end program DOT",
+       "ANON MATMUL end program DOT",
+       "ANON QUESTION end program DOT",
+       "ANON QUESTION MATMUL end program DOT",
+       "ANON LPAREN fargs RPAREN end program DOT",
+       "ANON MATMUL LPAREN fargs RPAREN end program DOT",
+       "ANON QUESTION LPAREN fargs RPAREN end program DOT",
+       "ANON QUESTION MATMUL LPAREN fargs RPAREN end program DOT",
+       "ANON COLON type end program DOT",
+       "ANON MATMUL COLON type end program DOT",
+       "ANON QUESTION COLON type end program DOT",
+       "ANON QUESTION MATMUL COLON type end program DOT",
+       "ANON LPAREN fargs RPAREN COLON type end program DOT",
+       "ANON MATMUL LPAREN fargs RPAREN COLON type end program DOT",
+       "ANON QUESTION LPAREN fargs RPAREN COLON type end program DOT",
+       "ANON QUESTION MATMUL LPAREN fargs RPAREN COLON type end program DOT")
+    def expr(self, p):
+        if hasattr(p, "type"):
+            return (f"func_def_anon{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}", getattr(p, "fargs", []), p.type, p.program)
+        else:
+            return (f"func_def_anon{"_async" if hasattr(p, "QUESTION") else ""}{"_self" if hasattr(p, "MATMUL") else ""}_untyped", getattr(p, "fargs", []), p.program)
     
     @_("MATMUL")
     def expr(self, p):
