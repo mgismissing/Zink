@@ -61,9 +61,9 @@ class ZinkLexer(Lexer):
 
     ignore                  = " \t"
 
-    @_(r"=== .*\n")
+    @_(r"=== .*(?=\n)")
     def COMMENT(self, t):
-        t.value = t.value[4:].strip("\n")
+        t.value = t.value[4:]
         return t
 
     @_(r'\\\n')
@@ -509,7 +509,7 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return p.expr
     
-    @_("COMMENT")
+    @_("COMMENT end")
     def stmt(self, p):
         return ("COMMENT", p.COMMENT) if self.include_comments else None
     
