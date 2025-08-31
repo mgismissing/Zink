@@ -876,9 +876,12 @@ class ZinkParser(Parser):
     
     @_("expr DOT var DOLLAR LPAREN fcargs RPAREN",
        "expr DOT var DOLLAR LPAREN NEWLINE fcargs NEWLINE RPAREN",
-       "expr DOT var DOLLAR EXCLAMATION")
+       "expr DOT var DOLLAR EXCLAMATION",
+       "expr DOT RAWSTRING DOLLAR LPAREN fcargs RPAREN",
+       "expr DOT RAWSTRING DOLLAR LPAREN NEWLINE fcargs NEWLINE RPAREN",
+       "expr DOT RAWSTRING DOLLAR EXCLAMATION",)
     def func(self, p):
-        return ("func_self", p.expr, p.var, getattr(p, "fcargs", []))
+        return ("func_self", p.expr, getattr(p, "var", ("raw", p.RAWSTRING)), getattr(p, "fcargs", []))
 
     @_("func")
     def expr(self, p):
