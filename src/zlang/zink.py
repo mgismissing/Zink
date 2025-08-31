@@ -881,7 +881,7 @@ class ZinkParser(Parser):
        "expr DOT RAWSTRING DOLLAR LPAREN NEWLINE fcargs NEWLINE RPAREN",
        "expr DOT RAWSTRING DOLLAR EXCLAMATION",)
     def func(self, p):
-        return ("func_self", p.expr, getattr(p, "var", ("raw", p.RAWSTRING)), getattr(p, "fcargs", []))
+        return ("func_self", p.expr, p.var if hasattr(p, "var") else ("raw", p.RAWSTRING), getattr(p, "fcargs", []))
 
     @_("func")
     def expr(self, p):
