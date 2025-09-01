@@ -591,11 +591,19 @@ class ZinkParser(Parser):
     
     @_("LBRACE expr RBRACE RARROW expr end")
     def stmt(self, p):
-        return ("list_remove", p.expr0, p.expr1)
+        return ("list_remove_last", p.expr0, p.expr1)
     
     @_("LBRACE expr RBRACE LARROW expr end")
     def stmt(self, p):
         return ("list_append", p.expr0, p.expr1)
+    
+    @_("LBRACE expr COMMA expr RBRACE RARROW expr end")
+    def stmt(self, p):
+        return ("list_remove", p.expr0, p.expr1, p.expr2)
+    
+    @_("LBRACE expr COMMA expr RBRACE LARROW expr end")
+    def stmt(self, p):
+        return ("list_insert", p.expr0, p.expr1, p.expr2)
     
     @_("ASSERT expr end")
     def stmt(self, p):
