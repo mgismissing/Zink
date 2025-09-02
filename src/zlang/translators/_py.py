@@ -104,8 +104,8 @@ class T(Template):
     def _cast_type(s):                                                              return f"type({s.wt(s.n[2])})({s.wt(s.n[1])})"
     def _use(s):                                                                    return f"import {s.wt(s.n[1])}"
     def _use_as(s):                                                                 return f"{s._use()} as {s.wt(s.n[2])}"
-    def _use_from(s):                                                               return f"from {s.n[2]} "+s._use()
-    def _use_as_from(s):                                                            return f"from {s.n[3]} "+s._use_as()
+    def _use_from(s):                                                               return f"from {s.wt(s.n[2])} "+s._use()
+    def _use_as_from(s):                                                            return f"from {s.wt(s.n[3])} "+s._use_as()
     def _while(s):                          s.indent += 4;                          return f"while {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
     def _for(s):                            s.indent += 4;                          return f"for {s.jwt(s.n[1], ", ")} in {s.wt(s.n[2])}:{s.body(s.wt(s.n[3]))}"
     def _for_at(s):                         s.indent += 4;                          return f"for {s.wt(s.n[2])}, ({s.jwt(s.n[1], ", ")}) in enumerate({s.wt(s.n[3])}):{s.body(s.wt(s.n[4]))}"
