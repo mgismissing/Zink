@@ -34,7 +34,10 @@ class T:
     def jfwt(self, nodes, func, sep: str, dollar: str = None, indent: int = None):
         return self.jwt(filter(func, nodes), sep, dollar, indent)
     def body(self, content: list[str]):
-        return "\n"+"\n".join(content if len(content) > 0 else self.empty_body())
+        clen = 0
+        for line in content:
+            if line.replace(" ", "") != "": clen += 1
+        return "\n"+"\n".join(content if clen > 0 else self.empty_body())
     def escape(self, text: str):
         return text
     
