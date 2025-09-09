@@ -120,7 +120,7 @@ class T(Template):
     def _if_elif_else(s):                                                           return f"{s._if_elif()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[4]))}"
     def _generator(s):                      s.dollar = s.wt(s.n[1]);                return f"({s.dollar} for {s.jwt(s.n[2], ", ")} in {(s.wt(s.n[3]))})"
     def _generator_at(s):                   s.dollar = f"({s.jwt(s.n[2], ", ")})";  return f"({s.wt(s.n[1])} for {s.wt(s.n[3])}, {s.dollar} in enumerate({s.wt(s.n[4])}))"
-    def _ternary(s):                                                                return f"({s.wt(s.n[1])} if {s.wt(s.n[2])} else {s.wt(s.n[3])})"
+    def _ternary(s):                        s.dollar = s.wt(s.n[1]);                return f"({s.wt(s.n[1])} if {s.wt(s.n[2])} else {s.wt(s.n[3])})"
     def _try(s):                            s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}\n{" "*(s.indent-4)}except:\n{" "*(s.indent)}pass"
     def _try_else(s):                                                               return f"{s._try()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[2]))}"
     def _try_catch(s):                      s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}{s.body(list((" "*(s.indent-4))+f"except {s.wt(cond)}:{s.body(s.wt(prog))}" for cond, prog in s.n[2]))}"
