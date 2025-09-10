@@ -285,7 +285,7 @@ class ZinkParser(Parser):
         ("left", "INDEX"),
         ("left", "PLUS", "MINUS", "STRJOIN"),
         ("left", "ASTERISK", "SLASH", "DB_ASTERISK", "DB_SLASH", "PERCENTAGE", "MATMUL", "AMPERSAND", "PIPE", "CARET", "DB_LESS_THAN", "DB_GREATER_THAN", "COLON_EQUAL"),
-        ("right", "UNARY_PLUS", "UNARY_MINUS", "STRING_UPPER", "STRING_LOWER", "LENGTH", "TYPE", "TILDE"),
+        ("right", "UNARY_PLUS", "UNARY_MINUS", "STRING_UPPER", "STRING_LOWER", "TYPE", "TILDE", "HASHTAG"),
         ("left", "INCREMENT", "DECREMENT"),
         ("left", "AS", "LIKE"),
         ("left", "MEMBER", "DOT", "LPAREN", "EXCLAMATION")
@@ -1142,7 +1142,7 @@ class ZinkParser(Parser):
     def expr(self, p):
         return ("string_lower", p.expr)
     
-    @_("HASHTAG expr %prec LENGTH")
+    @_("HASHTAG expr")
     def expr(self, p):
         return ("length", p.expr)
     
