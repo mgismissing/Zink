@@ -423,6 +423,14 @@ class ZinkParser(Parser):
     def fcarg(self, p):
         return ("default_arg", p.ID, p.expr)
     
+    @_("ID EQUAL PLUS")
+    def fcarg(self, p):
+        return ("true_arg", p.ID)
+    
+    @_("ID EQUAL MINUS")
+    def fcarg(self, p):
+        return ("false_arg", p.ID)
+    
     @_("fcargs COMMA fcarg")
     def fcargs(self, p):
         return p.fcargs + [p.fcarg]

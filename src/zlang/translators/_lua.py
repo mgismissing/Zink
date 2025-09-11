@@ -22,6 +22,8 @@ class T(Template):
     def _list(s):                                                                   return s._tuple()
     def _dict(s):                                                                   return "{"+(", ".join(f"{s.wt(k)}={s.wt(v)}" for k, v in s.n[1]))+"}"
     def _arg(s):                                                                    return f"*{s.n[1]}"
+    def _true_arg(s):                                                               return f"{s.n[1]} = true"
+    def _false_arg(s):                                                              return f"{s.n[1]} = false"
     def _default_arg(s):                                                            return f"{s.n[1]} = {s.wt(s.n[2])}"
     def _set(s):                            s.dollar = s.jwt(s.n[1], ", ");         return f"{s.dollar} = {s.jwt(s.n[2], ", ")}"
     def _set_add(s):                        s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = {s.dollar} + {s.wt(s.n[2])}"

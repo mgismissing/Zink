@@ -31,6 +31,8 @@ class T(Template):
     def _typesel(s):                                                                return f"{s.wt(s.n[1])} | {s.wt(s.n[2])}"
     def _arg(s):                                                                    return f"*{s.n[1]}"
     def _kwarg(s):                                                                  return f"**{s.n[1]}"
+    def _true_arg(s):                                                               return f"{s.n[1]} = True"
+    def _false_arg(s):                                                              return f"{s.n[1]} = False"
     def _typed_arg(s):                                                              return f"{s.n[1]}: {s.wt(s.n[2])}"
     def _default_arg(s):                                                            return f"{s.n[1]} = {s.wt(s.n[2])}"
     def _default_typed_arg(s):                                                      return f"{s.n[1]}: {s.wt(s.n[2])} = {s.wt(s.n[3])}"
