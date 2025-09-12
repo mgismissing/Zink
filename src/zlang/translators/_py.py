@@ -146,7 +146,7 @@ class T(Template):
     def _func_assign_self(s):                                                       return s.wt(s.n[1])
     def _func_assign_super(s):                                                      return s.wt(s.n[1])
     def _class_def(s):                      s.indent += 4;                          return f"class {s.n[1]}:{s.body(s.wt(s.n[2]))}"
-    def _class_def_from(s):                 s.indent += 4;                          return f"class {s.n[1]}({s.n[2]}):{s.body(s.wt(s.n[3]))}"
+    def _class_def_from(s):                 s.indent += 4;                          return f"class {s.n[1]}({s.wt(s.n[2])}):{s.body(s.wt(s.n[3]))}"
     def _namespace_def(s):                                                          return s._class_def()
     def _with(s):                           s.indent += 4;                          return f"with {s.wt(s.n[1])} as {s.wt(s.n[2])}:{s.body(s.wt(s.n[3]))}"
     def _return(s):                                                                 return f"return {s.wt(s.n[1])}"

@@ -825,9 +825,9 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("class_def", p.ID, p.program)
     
-    @_("CLASS ID FROM ID end program DOT")
+    @_("CLASS ID FROM expr end program DOT")
     def stmt(self, p):
-        return ("class_def_from", p.ID0, p.ID1, p.program)
+        return ("class_def_from", p.ID, p.expr, p.program)
     
     @_("NAMESPACE ID end program DOT")
     def stmt(self, p):
