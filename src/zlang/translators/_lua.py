@@ -34,6 +34,7 @@ class T(Template):
     def _set_power(s):                      s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = math.pow({s.dollar}, {s.wt(s.n[2])})"
     def _set_floor_divide(s):               s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = math.floor({s.dollar} / {s.wt(s.n[2])})"
     def _set_modulo(s):                     s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = {s.dollar} % {s.wt(s.n[2])}"
+    def _set_self(s):                                                               return f"self.{(_ := s.wt(s.n[1]))} = {_}"
     def _set_strjoin(s):                    s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = {s.dollar} .. {s.wt(s.n[2])}"
     def _add(s):                                                                    return f"{s.wt(s.n[1])} + {s.wt(s.n[2])}"
     def _subtract(s):                                                               return f"{s.wt(s.n[1])} - {s.wt(s.n[2])}"
