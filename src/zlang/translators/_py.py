@@ -53,7 +53,7 @@ class T(Template):
     def _set_bitwise_shl(s):                s.dollar = s.wt(s.n[1]);                return f"{s.dollar} <<= {s.wt(s.n[2])}"
     def _set_bitwise_shr(s):                s.dollar = s.wt(s.n[1]);                return f"{s.dollar} >>= {s.wt(s.n[2])}"
     def _set_self(s):                                                               return f"self.{(_ := s.wt(s.n[1]))} = {_}"
-    def _set_cast(s):                       s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = type({s.wt(s.n[2])}())({s.dollar})"
+    def _set_cast(s):                       s.dollar = s.wt(s.n[1]);                return f"{s.dollar} = {s.wt(s.n[2])}({s.dollar})"
     def _set_strjoin(s):                                                            return s._add()
     def _add(s):                                                                    return f"{s.wt(s.n[1])} + {s.wt(s.n[2])}"
     def _subtract(s):                                                               return f"{s.wt(s.n[1])} - {s.wt(s.n[2])}"
