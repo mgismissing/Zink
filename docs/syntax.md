@@ -12,11 +12,11 @@ Zink allows for 3 types of strings: the normal string `"hello"`, byte strings `b
 
 ## Raw strings
 
-Zink also allows to include snippets of code that will be converted as-is: raw strings ```print("Hello, World!")```. They can be either alone as statements or inside expressions.
+Zink also allows to include snippets of code that will be converted as-is: raw strings ``` `print("Hello, World!")` ```. They can be either alone as statements or inside expressions.
 
 ## Numbers
 
-Numbers can be integers `10`, decimals `0.10` (or abbreviated `.10`), hexadecimal `0x10` or binary `0b10`. Any number of underscores are allowed anywhere in between, at the start and at the end `_1__0__` &rarr; `10`.
+Numbers can be integers `10`, decimals `0.10` (or abbreviated `.10`), hexadecimal `0x10` or binary `0b10`. Any number of underscores are allowed anywhere in between, at the start and at the end (`_1__0__` &rarr; `10`).
 
 ## Line endings
 
@@ -32,7 +32,7 @@ Variables must start with an uppercase or lowercase letter (A-Z) or with an unde
 
 ## Assignment
 
-Variable assignment works exactly like in Python, where a variable `a` or a group of them `a, b, c` can be assigned to a value `= 1` or multiple of them `= 1, 2, 3`.
+Variable assignment works exactly like in Python, where a variable `a` or a group of them `a, b, c` can be assigned to a value `= 1` or multiple of them `= 1, 2, 3`. Variables can also be scoped with the dedicated keywords `local`, `!local` and `global`.
 
 ## Compound assignment
 
@@ -56,9 +56,12 @@ In some cases, assignment can be abbreviated with a compound assignment operator
 | `a = a << b`      | `a <<= b` |
 | `a = a >> b`      | `a >>= b` |
 | `self.a = a`      | `@<-a`    |
-| `a = type(b)(a)`  | `a to b`  |
+| `a = a .. b`      | `a ..= b` |
+| `a = b(a)`        | `a to b`  |
 | `a = b.pop()`     | `{b}->a`  |
+| `a = b.pop(c)`    | `{b:c}->a`|
 | `a.append(b)`     | `{a}<-b`  |
+| `a.insert(b, c)`  | `{a:b}<-c`|
 
 ## General statements
 
@@ -109,6 +112,30 @@ for a -> b
 
 ```zink
 for a at b -> c
+    ...
+.
+```
+
+### Repetition
+
+```zink
+times x
+    ...
+.
+```
+
+### Repetition with count
+
+```zink
+for i to a
+    ...
+.
+```
+
+### Repetition with count and set start
+
+```zink
+for i from a to b
     ...
 .
 ```
@@ -231,13 +258,21 @@ def a(b: type): type
 .
 ```
 
-Functions can be asynchronous:
+Functions can have "attributes":
 
 ```zink
-def async a(b)
+=== asynchronous
+def ?a(b)
+    ...
+.
+
+=== method
+def @a(b)
     ...
 .
 ```
+
+Functions can also be prefixed with one of the scoping keywords.
 
 Dunder methods (`__add__`, `__sub__` and so on) can also be declared with this other syntax (`@` is implicit when declaring with `/`):
 
@@ -260,6 +295,30 @@ To call a function:
 
 ```zink
 a(b)
+```
+
+### Anonymous functions
+
+Some languages support defining functions without naming them. To do so in Zink, we use the `anon` keyword:
+
+```zink
+a = anon(b)
+    ...
+.
+```
+
+These functions can have attributes too:
+
+```zink
+=== asynchronous
+a = anon?(b)
+    ...
+.
+
+=== method
+a = anon@(b)
+    ...
+.
 ```
 
 ## Macros
@@ -286,6 +345,8 @@ class a
 .
 ```
 
+Classes can be prefixed with one of the scoping keywords.
+
 ## Descendants
 
 Descendants are classes that inherit code from other classes.
@@ -300,16 +361,6 @@ class a from b
 
 ```zink
 with a as b
-    ...
-.
-```
-
-### Times
-
-`times a` is used as a shorthand for `for _ in range(a): del _; ...`:
-
-```zink
-times a
     ...
 .
 ```
@@ -374,6 +425,7 @@ To eliminate unnecessary repetition of the same variable, the dollar `$` is used
 |-------------------|-------------------|
 | `a += $`          | `a += a`          |
 | `a = a[b]`        | `a = $[b]`        |
+| `a.b(a, c)`       | `a.b$(c)`         |
 
 ## Comments
 

@@ -2,7 +2,7 @@
 Zink is a programming language that simplifies scripting with many tweaks and additions.
 
 ## Why Zink and not other languages?
-One of the problems developers face when writing in other languages is that it can sometimes be very complex to write simple expressions, like for example iterating through a list while also getting the current item's position in that list in Python, which uses the `enumerate` function.
+One of the problems developers face when writing in other languages is that it can sometimes be very complex to write simple expressions, like for example iterating through a list while also getting the current item's position in that list in Python, which uses the `enumerate` function, or simply the verbosity of class definitions.
 
 Zink simplifies these kinds of operations by letting the developer write shorter code and still converting it to the correct functions.
 
@@ -63,15 +63,15 @@ And look at those same classes in Zink:
 
 ```zink
 class Animal
-    /init @name: str;;.
-    def eat(@, food: str): None
+    /* @name: str;;.
+    def @eat(food: str): None
         print(@.name, "is eating", food)
     .
 .
 
 class Bird from Animal
-    /init ^name: str, @color: str;;.
-    def fly(@): None
+    /* ^name: str, @color: str;;.
+    def @fly: None
         print(@.color, @.name, "is flying")
     .
 .
@@ -82,4 +82,4 @@ You can start to notice that it simplifies many things that require a lot of tim
 Getting the length of an object is as easy as typing `#` before the object, and converting an object to a type is done with the repurposed keyword `as`.
 
 ## Language support
-Zink is also built with the idea of writing the same code while still converting it to many languages, like for example writing the source code in Zink and then converting it to both Python and Ruby.
+Zink is also built with the idea of writing the same code while still converting it to many languages, like for example writing the source code in Zink and then converting it to both Python and Lua, which is much quicker than learning two languages' syntax individually.

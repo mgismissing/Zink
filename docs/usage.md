@@ -4,7 +4,7 @@ Zink can be either directly called from the command line or imported and used in
 
 # Command line
 
-Running the command `z` (or `python -m zlang`) starts the REPL that, given valid Zink syntax, will return and execute the Python equivalent.
+Running the command `z` (or `python -m zlang`) starts the REPL that, given valid Zink syntax, will return and execute the Python equivalent. It also accepts one or more file names with parameters that will be used for the transpilation process.
 
 # Usage in Python
 
