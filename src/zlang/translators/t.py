@@ -14,15 +14,12 @@ class T:
         if self.n == None: return None
         ntype       = self.n[0]
         if ntype == None: return None
-        try:
-            t = getattr(self, "_"+ntype)
-            if type(t) in [MethodType, FunctionType]: out = t()
-            else: out = t
-        except AttributeError:
-            out = None
-        if out != None: return out
-        print_error(f"Language \"{self.name}\" doesn't support \"{ntype}\"")
-        exit(1)
+        if not hasattr(self, "_"+ntype):
+            print_error(f"Language \"{self.name}\" doesn't support \"{ntype}\"")
+            exit(1)
+        t = getattr(self, "_"+ntype)
+        if type(t) in [MethodType, FunctionType]: return t()
+        else: return t
     
     def empty_body(s):
         return []

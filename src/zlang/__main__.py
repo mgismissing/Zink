@@ -10,14 +10,14 @@ def parse_args():
     parser.add_argument(
         "-l", "--lang",
         metavar="lang",
-        default="py",
-        help="language to translate to (default: py)"
+        default="zink",
+        help="language to translate to (default: \"zink\", runs in interpreter mode)"
     )
     parser.add_argument(
         "files",
         metavar=("file", "output"),
         nargs="*",
-        help="Zink file(s) to translate and translated output file(s) pair"
+        help="Zink file(s) to run or translate and translated output file(s) pair"
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -28,6 +28,11 @@ def parse_args():
         "-p", "--pretty",
         action="store_true",
         help="keep comments and empty lines in translated output"
+    )
+    parser.add_argument(
+        "-d", "--debug",
+        action="store_true",
+        help="print generated AST"
     )
     parser.add_argument(
         "--ignore-obsolete",
@@ -54,7 +59,7 @@ def main():
         
     def parse(s: str):
         parsed = parser.parse(lexer.tokenize(s))
-        #print(parsed)
+        if args.debug: print(parsed)
         return None if parsed == None else translator(parsed, "None", 0)
 
     rung = {
@@ -66,7 +71,16 @@ def main():
         "__builtins__": __builtins__
     }
 
+    if args.lang == "zink":
+        if args.pretty:
+            print_error("Zink interpreter doesn't support pretty mode")
+            exit(7)
+
     if args.files:
+        if args.lang == "zink" and len(args.files) > 1:
+            print_error("Zink interpreter requires a maximum of 1 file to run")
+            exit(6)
+        
         i = 0
         while i < len(args.files):
             file = args.files[i]
@@ -107,12 +121,15 @@ def main():
                     print_error(e)
                 else:
                     if parsed:
-                        if args.verbose or args.lang != "py": print("\n".join(parsed))
+                        #if args.lang == "zink":
+                        #    run zink code
                         if args.lang == "py":
                             try:
                                 exec("\n".join(parsed), rung)
                             except Exception as e:
                                 print_error(f"Python {e.__class__.__name__}: {e}")
+                        elif args.verbose:
+                            print("\n".join(parsed))
         except KeyboardInterrupt:
             print()
 
