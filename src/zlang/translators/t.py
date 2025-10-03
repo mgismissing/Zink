@@ -26,6 +26,8 @@ class T:
     
     def wt(self, node, dollar: str = None, indent: int = None):
         return type(self)()(node, dollar if dollar else self.dollar, indent if indent else self.indent)
+    def wtl(self, nodes, dollar: str = None, indent: int = None):
+        return [self.wt(node, dollar, indent) for node in nodes]
     def jwt(self, nodes, sep: str, dollar: str = None, indent: int = None):
         return sep.join(str(self.wt(node, dollar, indent)) for node in nodes)
     def jfwt(self, nodes, func, sep: str, dollar: str = None, indent: int = None):
