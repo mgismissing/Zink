@@ -60,3 +60,5 @@ class T:
         return s.n[1]
     def _dotid_dot(s):
         return f"{s.n[1]}.{s.wt(s.n[2])}"
+    def _dot(s):
+        return f".{s.wt(s.n[1])}"

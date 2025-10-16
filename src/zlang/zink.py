@@ -509,6 +509,15 @@ class ZinkParser(Parser):
     def end(self, p):
         return None
     
+    @_("dotid")
+    @_("ASTERISK")
+    def ref(self, p):
+        return p
+    
+    @_("DOT dotid")
+    def ref(self, p):
+        return ("dot", p)
+    
     @_("end")
     def stmt(self, p):
         return ("EMPTY_LINE",) if self.include_empty_lines else None
@@ -621,21 +630,21 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("raise", p.expr)
     
-    @_("USE dotid end")
+    @_("USE ref end")
     def stmt(self, p):
         return ("use", p.dotid)
     
-    @_("USE dotid AS dotid end")
+    @_("USE ref AS dotid end")
     def stmt(self, p):
-        return ("use_as", p.dotid0, p.dotid1)
+        return ("use_as", p.ref0, p.dotid0)
     
-    @_("USE dotid FROM dotid end")
+    @_("USE ref FROM ref end")
     def stmt(self, p):
-        return ("use_from", p.dotid0, p.dotid1)
+        return ("use_from", p.ref0, p.ref1)
     
-    @_("USE dotid AS dotid FROM dotid end")
+    @_("USE ref AS dotid FROM ref end")
     def stmt(self, p):
-        return ("use_as_from", p.dotid0, p.dotid1, p.dotid2)
+        return ("use_as_from", p.ref0, p.dotid0, p.ref1)
     
     @_("WHILE expr end program DOT end")
     def stmt(self, p):
