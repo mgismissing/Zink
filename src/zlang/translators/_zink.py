@@ -2,6 +2,21 @@ from .t import T as Template
 from ..logger import print_info, print_warn, print_error
 import inspect
 
+class errors:
+    class BaseError(BaseException):
+        def __init__(self, desc: str):
+            self.desc = desc
+        def __str__(self):
+            return f"{type(self).__name__}: {self.desc}"
+    class OperatorError(BaseError):
+        def __init__(self, op: str, this: str, other: str | None):
+            super().__init__(f"Cannot {op} \"{this}\" and \"{other}\"")
+    class ArgumentError(BaseError):
+        pass
+    class ArgumentPositionError(ArgumentError):
+        def __init__(self):
+            super().__init__("Cannot have a positional argument after a keyword argument")
+
 class types:
     class obj:
         def __init__(self, value):
@@ -32,7 +47,17 @@ class types:
             return f"<bool {self.value}>"
         def __str__(self):
             return "True" if self.value else "False"
-            
+        def __add__(self, other, error):
+            match type(other):
+                case types.int: return other.value + (1 if self.value else 0)
+            raise error
+        def __sub__(self, other, error):
+            match type(other):
+                case types.int: return other.value - (1 if self.value else 0)
+            raise error
+        def __radd__(self, other, error): return self.__add__(other, error)
+        def __rsub__(self, other, error): return self.__sub__(other, error)
+
     class int(obj):
         def __init__(self, value):
             super().__init__(int(value))
@@ -40,6 +65,16 @@ class types:
             return f"<int {self.value}>"
         def __str__(self):
             return str(self.value)
+        def __add__(self, other, error):
+            match type(other):
+                case types.int: return self.value + other.value
+            raise error
+        def __sub__(self, other, error):
+            match type(other):
+                case types.int: return self.value - other.value
+            raise error
+        def __radd__(self, other, error): return self.__add__(other, error)
+        def __rsub__(self, other, error): return self.__sub__(other, error)
 
     class str(obj):
         def __init__(self, value):
@@ -137,15 +172,16 @@ class T(Template):
     g = types.vars()
     g.set("test", types.pyfunc(lambda: print("Hello, World")))
 
-    def __init__(self):
+    def __init__(self, top: bool = True):
         super().__init__("Zink")
+        self.top = top
     
     def __call__(self, node: tuple[str, ...], dollar: str = "", indent: int = 0, vars: types.vars = g):
         self.vars = vars
         return super().__call__(node, dollar, indent)
     
     def wt(self, node, dollar: str = None, indent: int = None, vars: types.vars = None):
-        return type(self)()(node, dollar if dollar else self.dollar, indent if indent else self.indent, vars if vars else self.vars)
+        return type(self)(top=False)(node, dollar if dollar else self.dollar, indent if indent else self.indent, vars if vars else self.vars)
     def wtl(self, nodes, dollar: str = None, indent: int = None, vars: types.vars = None):
         return [self.wt(node, dollar, indent, vars) for node in nodes]
     def jwt(self, nodes, sep: str, dollar: str = None, indent: int = None, vars: types.vars = None):
@@ -172,8 +208,24 @@ class T(Template):
         print_error(s)
         exit(8)
 
+    def add(self, this, other):
+        print(repr(this), repr(other))
+        error = errors.OperatorError("add", type(this).__name__, type(other).__name__)
+        try:
+            if (attr := getattr(this, "__add__", None)):
+                return attr(other, error)
+        except type(error):
+            try:
+                if (attr := getattr(other, "__radd__", None)):
+                    return attr(this, error)
+            except type(error):
+                raise error
+
     def _program(s):
-        print("PROGRAM:", s.swtl(s.n[1]))
+        try:
+            print("PROGRAM:", s.swtl(s.n[1]))
+        except errors.BaseError as e:
+            s.error(str(e))
     
     def _var(s):
         if s.n[1] == "$": return s.dollar
@@ -220,7 +272,7 @@ class T(Template):
                 if type(arg) == types.pair: break
                 l.set(f.args[i].value, s.sv(arg))
             for arg in a[len(l.value):]:
-                if type(arg) != types.pair: s.error("Cannot have a positional argument after a keyword argument")
+                if type(arg) != types.pair: errors.ArgumentPositionError()
                 if l.get(arg.key): s.error(f"Multiple values for argument \"{arg.key}\"")
                 l.set(arg.key, arg.value)
             l.overlay(s.vars)
@@ -255,6 +307,11 @@ class T(Template):
                 s.error(f"Cannot unpack {len(vals)} value{"" if len(vals) == 1 else "s"} to {len(vars)} variables")
             for i, var in enumerate(vars):
                 s.vars.set(var.value, s.sv(vals[i]))
-    
+
+    def _add(s):
+        return s.add(s.swt(s.n[1]), s.swt(s.n[2]))
+    def _subtract(s):
+        return s.subtract(s.swt(s.n[1]), s.swt(s.n[2]))
+
     def _func_def_untyped(s):
         s.vars.set(s.wt(s.n[1]), types.func(s.wtl(s.n[2]), s.n[3]))
