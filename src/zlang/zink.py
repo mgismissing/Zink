@@ -512,11 +512,11 @@ class ZinkParser(Parser):
     @_("dotid")
     @_("ASTERISK")
     def ref(self, p):
-        return p
+        return getattr(p, "dotid", ("all",))
     
     @_("DOT dotid")
     def ref(self, p):
-        return ("dot", p)
+        return ("dot", p.dotid)
     
     @_("end")
     def stmt(self, p):

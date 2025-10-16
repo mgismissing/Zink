@@ -163,6 +163,7 @@ class T(Template):
     def _asterisk_arg(s):                                                           return f"*"
     def _self(s):                                                                   return f"self"
     def _super(s):                                                                  return f"super()"
+    def _all(s):                                                                    return f"*"
     
     def empty_body(s):
         return [" "*s.indent+s._pass()]
