@@ -632,7 +632,7 @@ class ZinkParser(Parser):
     
     @_("USE ref end")
     def stmt(self, p):
-        return ("use", p.dotid)
+        return ("use", p.ref)
     
     @_("USE ref AS dotid end")
     def stmt(self, p):
