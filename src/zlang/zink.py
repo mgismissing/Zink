@@ -636,7 +636,7 @@ class ZinkParser(Parser):
     
     @_("USE ref AS dotid end")
     def stmt(self, p):
-        return ("use_as", p.ref0, p.dotid0)
+        return ("use_as", p.ref, p.dotid)
     
     @_("USE ref FROM ref end")
     def stmt(self, p):
@@ -644,7 +644,7 @@ class ZinkParser(Parser):
     
     @_("USE ref AS dotid FROM ref end")
     def stmt(self, p):
-        return ("use_as_from", p.ref0, p.dotid0, p.ref1)
+        return ("use_as_from", p.ref0, p.dotid, p.ref1)
     
     @_("WHILE expr end program DOT end")
     def stmt(self, p):
