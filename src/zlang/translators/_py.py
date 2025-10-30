@@ -104,7 +104,7 @@ class T(Template):
     def _get_type(s):                                                               return f"type({s.wt(s.n[1])})"
     def _cast(s):                                                                   return f"{s.wt(s.n[2])}({s.wt(s.n[1])})"
     def _cast_type(s):                                                              return f"type({s.wt(s.n[2])})({s.wt(s.n[1])})"
-    def _use(s):                                                                    return f"import {s.wt(s.n[1])}"
+    def _use(s):                                                                    return f"from . import {_[1:]}" if (_ := s.wt(s.n[1])).startswith(".") else f"import {_}"
     def _use_as(s):                                                                 return f"{s._use()} as {s.wt(s.n[2])}"
     def _use_from(s):                                                               return f"from {s.wt(s.n[2])} "+s._use()
     def _use_as_from(s):                                                            return f"from {s.wt(s.n[3])} "+s._use_as()
