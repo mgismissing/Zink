@@ -204,6 +204,16 @@ try
 .
 ```
 
+An exception object can be obtained like this:
+
+```zink
+try
+    ...
+.catch a = b
+    ...
+.
+```
+
 Catches can be chained one after the other.
 
 ### Try-else
@@ -360,7 +370,7 @@ class a from b
 ### With
 
 ```zink
-with a as b
+with a = b
     ...
 .
 ```
