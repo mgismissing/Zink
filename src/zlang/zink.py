@@ -489,9 +489,12 @@ class ZinkParser(Parser):
         return [p.if_elif]
     
     @_("CATCH expr end program DOT",
-       "CATCH expr end program DOT end")
+       "CATCH expr end program DOT end",
+       "CATCH expr EQUAL expr end program DOT",
+       "CATCH expr EQUAL expr end program DOT end")
     def try_catch(self, p):
-        return (p.expr, p.program)
+        if hasattr(p, "EQUAL"): return (p.expr0, p.expr1, p.program)
+        else: return (p.expr, None, p.program)
     
     @_("try_catches try_catch")
     def try_catches(self, p):
@@ -842,7 +845,7 @@ class ZinkParser(Parser):
     def stmt(self, p):
         return ("namespace_def", p.ID, p.program)
     
-    @_("WITH expr AS expr end program DOT")
+    @_("WITH expr EQUAL expr end program DOT")
     def stmt(self, p):
         return ("with", p.expr0, p.expr1, p.program)
     

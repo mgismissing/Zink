@@ -125,7 +125,7 @@ class T(Template):
     def _ternary(s):                        s.dollar = s.wt(s.n[1]);                return f"({s.wt(s.n[1])} if {s.wt(s.n[2])} else {s.wt(s.n[3])})"
     def _try(s):                            s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}\n{" "*(s.indent-4)}except:\n{" "*(s.indent)}pass"
     def _try_else(s):                                                               return f"{s._try()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[2]))}"
-    def _try_catch(s):                      s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}{s.body(list((" "*(s.indent-4))+f"except {s.wt(cond)}:{s.body(s.wt(prog))}" for cond, prog in s.n[2]))}"
+    def _try_catch(s):                      s.indent += 4;                          return f"try:{s.body(s.wt(s.n[1]))}{s.body(list((" "*(s.indent-4))+f"except {s.wt(cond)}{f" as {s.wt(name)}" if name else ""}:{s.body(s.wt(prog))}" for cond, name, prog in s.n[2]))}"
     def _try_catch_else(s):                                                         return f"{s._try_catch()}\n{" "*(s.indent-4)}else:{s.body(s.wt(s.n[3]))}"
     def _match(s):                          s.indent += 4;                          return f"match {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
     def _case(s):                           s.indent += 4;                          return f"case {s.wt(s.n[1])}:{s.body(s.wt(s.n[2]))}"
